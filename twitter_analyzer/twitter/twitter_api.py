@@ -333,17 +333,37 @@ class TwitterAPI:
         )
     
     def search_tweets(self, query, query_type="Latest", cursor=""):
-        """
-        جستجوی پیشرفته توییت‌ها
+        """جستجوی پیشرفته توییت‌ها"""
+        self.logger.info(f"Searching tweets with query: '{query}'")
         
-        Endpoint: GET /twitter/tweet/advanced_search
-        """
-        return self._request(
+        response = self._request(
             "GET", 
             "/twitter/tweet/advanced_search", 
             params={"query": query, "queryType": query_type, "cursor": cursor}
         )
-    
+        
+        # Enhanced diagnostics
+        self.logger.debug(f"Response type: {type(response)}")
+        if isinstance(response, dict):
+            self.logger.debug(f"Response top-level keys: {list(response.keys())}")
+            
+            # Log tweet structure based on API document format
+            if 'tweets' in response:
+                tweets_container = response['tweets']
+                self.logger.debug(f"Tweets container type: {type(tweets_container)}")
+                
+                if isinstance(tweets_container, list) and tweets_container:
+                    sample_tweet = tweets_container[0]
+                    self.logger.debug(f"Sample tweet keys: {list(sample_tweet.keys())}")
+                    # Look for specific fields we need
+                    self.logger.debug(f"Sample tweet id: {sample_tweet.get('id')}")
+                    self.logger.debug(f"Sample tweet text: {sample_tweet.get('text', '')[:50]}...")
+                    
+                    # Check author structure 
+                    if 'author' in sample_tweet:
+                        self.logger.debug(f"Author keys: {list(sample_tweet['author'].keys())}")
+        
+        return response
     # === متدهای API برای فیلتر توییت (وبهوک/وبسوکت) ===
     
     def add_tweet_filter_rule(self, tag, value, interval_seconds):
