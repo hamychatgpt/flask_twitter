@@ -17,13 +17,13 @@
         {% if query %}
             <h2>نتایج جستجو برای: {{ query }}</h2>
             
-            {% if results and results.results %}
+            {% if results %}
                 <div class="tweet-list">
-                    {% for tweet in results.results %}
+                    {% for tweet in results %}
                         <div class="tweet-card">
-                            <div class="tweet-user">{{ tweet.user }}</div>
+                            <div class="tweet-user">{{ tweet.author.name }} (@{{ tweet.author.userName }})</div>
                             <div class="tweet-text">{{ tweet.text }}</div>
-                            <div class="tweet-date">{{ tweet.created_at }}</div>
+                            <div class="tweet-date">{{ tweet.createdAt }}</div>
                         </div>
                     {% endfor %}
                 </div>
