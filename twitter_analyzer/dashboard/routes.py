@@ -2,7 +2,7 @@ from flask import render_template, flash, redirect, url_for, request, jsonify, c
 from flask_login import login_required, current_user
 from . import dashboard_bp
 from twitter_analyzer.models.tweet import Tweet
-from twitter_analyzer.twitter.twitter_api import TwitterAPI
+from twitter_analyzer.twitter import twitter_api
 
 @dashboard_bp.route('/')
 def index():
@@ -42,9 +42,7 @@ def search():
         return render_template('dashboard/search.html', title='جستجوی توییت‌ها')
     
     try:
-        # ایجاد نمونه TwitterAPI 
-        twitter_api = TwitterAPI()
-        
+   
         # لاگ برای بررسی وضعیت API
         current_app.logger.info("Attempting to search tweets")
         
@@ -56,7 +54,7 @@ def search():
         return render_template('dashboard/search.html', 
                                title=f'جستجو: {query}', 
                                query=query, 
-                               results=results)
+                               results=results['tweets'])
     
     except Exception as e:
         # لاگ خطای دقیق

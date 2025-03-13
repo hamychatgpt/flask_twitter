@@ -11,7 +11,7 @@ class Config:
     
     # تنظیمات API توییتر
     # تنظیمات API توییتر
-    TWITTER_API_KEY = os.environ.get('TWITTER_API_KEY', '')
+    TWITTER_API_KEY = os.environ.get('TWITTER_API_KEY', 'cf5800d7a52a4df89b5df7ffe1c7303d')
     TWITTER_CACHE_SIZE = int(os.environ.get('TWITTER_CACHE_SIZE', 1000))
     TWITTER_CACHE_TTL = int(os.environ.get('TWITTER_CACHE_TTL', 300))  # 5 دقیقه
     
