@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}داشبورد{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <h1>داشبورد تحلیل توییتر</h1>
+    
+    <div class="stats-overview">
+        <div class="stat-card">
+            <h3>آمار کلی</h3>
+            <div class="text-center">
+                <div class="stat-value">{{ data.total_tweets }}</div>
+                <div class="stat-label">تعداد کل توییت‌ها</div>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <h3>تحلیل احساسات</h3>
+            <div class="sentiment-bars">
+                {% if data.total_tweets > 0 %}
+                <div class="sentiment-bar positive" style="width: {{ (data.sentiment.positive / data.total_tweets * 100)|round }}%">
+                    <span>مثبت: {{ data.sentiment.positive }}</span>
+                </div>
+                <div class="sentiment-bar neutral" style="width: {{ (data.sentiment.neutral / data.total_tweets * 100)|round }}%">
+                    <span>خنثی: {{ data.sentiment.neutral }}</span>
+                </div>
+                <div class="sentiment-bar negative" style="width: {{ (data.sentiment.negative / data.total_tweets * 100)|round }}%">
+                    <span>منفی: {{ data.sentiment.negative }}</span>
+                </div>
+                {% else %}
+                <p>داده‌ای برای نمایش وجود ندارد.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="chart-container">
+            <canvas id="sentimentChart"></canvas>
+        </div>
+    </div>
+    
+    <div class="hashtags-section">
+        <h2>هشتگ‌های پرتکرار</h2>
+        <div class="hashtag-list">
+            {% if data.top_hashtags %}
+                {% for hashtag in data.top_hashtags %}
+                    <span class="hashtag">{{ hashtag }}</span>
+                {% endfor %}
+            {% else %}
+                <p>هیچ هشتگی یافت نشد.</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="cta-section" style="margin-top: 2rem; text-align: center;">
+        <a href="{{ url_for('dashboard.analysis') }}" class="btn">مشاهده تحلیل دقیق‌تر</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // تعریف داده‌ها در یک آبجکت جاوااسکریپت
+    const dashboardData = {
+        totalTweets: {{ data.total_tweets|tojson }},
+        sentiment: {
+            positive: {{ data.sentiment.positive|tojson }},
+            neutral: {{ data.sentiment.neutral|tojson }},
+            negative: {{ data.sentiment.negative|tojson }}
+        }
+    };
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        if (dashboardData.totalTweets > 0) {
+            renderSentimentChart('sentimentChart', dashboardData.sentiment);
+        } else {
+            const ctx = document.getElementById('sentimentChart');
+            if (ctx) {
+                ctx.parentNode.innerHTML = '<div class="empty-data-message">داده‌ای برای نمایش نمودار وجود ندارد</div>';
+            }
+        }
+    });
+</script>
+{% endblock %}

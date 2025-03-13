@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}خطای سرور{% endblock %}
+
+{% block content %}
+<div class="error-container" style="text-align: center; margin: 5rem auto; max-width: 600px;">
+    <h1 style="font-size: 6rem; margin-bottom: 2rem; color: #1da1f2;">500</h1>
+    <h2>خطای سرور!</h2>
+    <p style="margin: 2rem 0;">متأسفانه خطایی در سرور رخ داده است. لطفاً دوباره تلاش کنید یا با پشتیبانی تماس بگیرید.</p>
+    <a href="{{ url_for('dashboard.index') }}" class="btn">بازگشت به صفحه اصلی</a>
+</div>
+{% endblock %}

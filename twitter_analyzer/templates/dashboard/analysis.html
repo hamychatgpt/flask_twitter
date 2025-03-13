@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}تحلیل توییت‌ها{% endblock %}
+
+{% block content %}
+<div class="analysis-container">
+    <h1>تحلیل دقیق توییت‌ها</h1>
+    
+    <div class="search-section">
+        <h2>جستجوی توییت</h2>
+        <form id="search-form" class="search-form">
+            <input type="text" id="search-query" placeholder="کلمه کلیدی یا هشتگ را وارد کنید">
+            <button type="submit" class="btn">جستجو</button>
+        </form>
+    </div>
+    
+    <div id="results-container" class="results-container">
+        <p>برای تحلیل توییت‌ها، یک عبارت جستجو وارد کنید</p>
+    </div>
+    
+    <div class="chart-container">
+        <h2>نمودار توزیع زمانی</h2>
+        <canvas id="timeChart"></canvas>
+    </div>
+</div>
+{% endblock %}

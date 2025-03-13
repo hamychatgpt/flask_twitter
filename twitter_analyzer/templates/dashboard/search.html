@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}جستجوی توییت‌ها{% endblock %}
+
+{% block content %}
+<div class="analysis-container">
+    <h1>جستجوی توییت‌ها</h1>
+    
+    <div class="search-section">
+        <form id="search-form" class="search-form" method="GET" action="{{ url_for('dashboard.search') }}">
+            <input type="text" id="search-query" name="q" placeholder="کلمه کلیدی یا هشتگ را وارد کنید" value="{{ query|default('') }}">
+            <button type="submit" class="btn">جستجو</button>
+        </form>
+    </div>
+    
+    <div id="results-container" class="results-container">
+        {% if query %}
+            <h2>نتایج جستجو برای: {{ query }}</h2>
+            
+            {% if results and results.results %}
+                <div class="tweet-list">
+                    {% for tweet in results.results %}
+                        <div class="tweet-card">
+                            <div class="tweet-user">{{ tweet.user }}</div>
+                            <div class="tweet-text">{{ tweet.text }}</div>
+                            <div class="tweet-date">{{ tweet.created_at }}</div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p>نتیجه‌ای یافت نشد.</p>
+            {% endif %}
+        {% else %}
+            <p>برای جستجوی توییت‌ها، یک عبارت وارد کنید.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

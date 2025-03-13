@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}صفحه یافت نشد{% endblock %}
+
+{% block content %}
+<div class="error-container" style="text-align: center; margin: 5rem auto; max-width: 600px;">
+    <h1 style="font-size: 6rem; margin-bottom: 2rem; color: #1da1f2;">404</h1>
+    <h2>صفحه مورد نظر یافت نشد!</h2>
+    <p style="margin: 2rem 0;">صفحه‌ای که به دنبال آن هستید وجود ندارد یا به آدرس دیگری منتقل شده است.</p>
+    <a href="{{ url_for('dashboard.index') }}" class="btn">بازگشت به صفحه اصلی</a>
+</div>
+{% endblock %}
