@@ -32,7 +32,7 @@ class CollectorService:
             current_app.logger.error(f"Expected dict for tweet_data, got {type(tweet_data)}")
             return None, False
         
-        # Extract tweet ID - according to API docs, it's just 'id' not 'id_str'
+        # Extract tweet ID
         tweet_id = tweet_data.get('id')
         if not tweet_id:
             current_app.logger.error(f"No 'id' field in tweet data")
@@ -42,7 +42,7 @@ class CollectorService:
         existing_tweet = Tweet.query.filter_by(twitter_id=str(tweet_id)).first()
         if existing_tweet:
             current_app.logger.debug(f"Tweet {tweet_id} already exists, updating stats")
-            # Update existing tweet stats using the API field names
+            # Update existing tweet stats
             existing_tweet.likes_count = tweet_data.get('likeCount', 0)
             existing_tweet.retweets_count = tweet_data.get('retweetCount', 0)
             existing_tweet.collection_id = collection_id
@@ -52,11 +52,30 @@ class CollectorService:
         # Extract tweet text
         text = tweet_data.get('text', '')
         
-        # Extract author information - per API docs, author is a nested object
-        username = ''
+        # Extract author information
         author = tweet_data.get('author', {})
-        if author:
-            username = author.get('userName', '')
+        username = author.get('userName', '')
+        twitter_user_id = None
+        
+        # Find or create TwitterUser
+        if username:
+            from ..models.twitter_user import TwitterUser
+            
+            # Get or create TwitterUser record
+            twitter_user = TwitterUser.query.filter_by(username=username).first()
+            if not twitter_user:
+                # برای twitter_id از id موجود در author یا از username استفاده می‌کنیم
+                author_id = author.get('id', username)
+                twitter_user = TwitterUser(
+                    twitter_id=str(author_id),
+                    username=username,
+                    display_name=author.get('displayName', ''),
+                    profile_image_url=author.get('profileImageUrl', '')
+                )
+                db.session.add(twitter_user)
+                db.session.flush()  # Get ID without committing
+            
+            twitter_user_id = twitter_user.id
         
         # Parse created_at date
         created_at = None
@@ -71,11 +90,10 @@ class CollectorService:
             created_at = datetime.utcnow()
         
         try:
-            # Create new tweet with the API field names
+            # ایجاد توییت جدید - بدون username
             new_tweet = Tweet(
                 twitter_id=str(tweet_id),
                 text=text,
-                username=username,
                 twitter_created_at=created_at,
                 likes_count=tweet_data.get('likeCount', 0),
                 retweets_count=tweet_data.get('retweetCount', 0),
@@ -83,20 +101,21 @@ class CollectorService:
                 quotes_count=tweet_data.get('quoteCount', 0),
                 language=tweet_data.get('lang', ''),
                 source=tweet_data.get('source', ''),
-                is_retweet=False,  # Would need additional logic to determine
-                is_quote=False,    # Would need additional logic to determine
+                is_retweet=False,
+                is_quote=False, 
                 is_reply=tweet_data.get('isReply', False),
                 collection_method=method,
                 collection_query=query,
-                collection_id=collection_id
+                collection_id=collection_id,
+                twitter_user_id=twitter_user_id  # استفاده از twitter_user_id به جای username
             )
             
             db.session.add(new_tweet)
-            db.session.flush()  # Get ID without committing
+            db.session.flush()
             
             current_app.logger.info(f"Created new tweet with ID: {tweet_id}")
             
-            # Process hashtags from text
+            # پردازش هشتگ‌ها و منشن‌ها بدون تغییر
             hashtag_texts = self._extract_hashtags(text)
             for hashtag_text in hashtag_texts:
                 hashtag = Hashtag.query.filter_by(text=hashtag_text).first()
@@ -109,7 +128,6 @@ class CollectorService:
                 
                 new_tweet.hashtags.append(hashtag)
             
-            # Process mentions from text
             mention_texts = self._extract_mentions(text)
             for mention_text in mention_texts:
                 mention = Mention.query.filter_by(username=mention_text).first()
