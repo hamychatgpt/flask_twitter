@@ -9,8 +9,10 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(128))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    is_admin = db.Column(db.Boolean, default=False)  # فیلد جدید
     
     tweets = db.relationship('Tweet', backref='author', lazy='dynamic')
+    collections = db.relationship('Collection', backref='author', lazy='dynamic')
     
     def __repr__(self):
         return f'<User {self.username}>'

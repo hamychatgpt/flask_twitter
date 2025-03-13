@@ -1,0 +1,63 @@
+{% extends 'admin/master.html' %}
+
+{% block body %}
+<h2>جمع‌آوری توییت‌ها</h2>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="panel panel-primary">
+            <div class="panel-heading">جمع‌آوری براساس کلمه کلیدی</div>
+            <div class="panel-body">
+                <form method="POST" action="{{ url_for('collectorview.collect_keyword') }}">
+                    <div class="form-group">
+                        <label for="keyword">کلمه کلیدی:</label>
+                        <input type="text" class="form-control" id="keyword" name="keyword" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="max_tweets_keyword">حداکثر توییت‌ها:</label>
+                        <input type="number" class="form-control" id="max_tweets_keyword" name="max_tweets" value="100" min="1" max="1000">
+                    </div>
+                    <button type="submit" class="btn btn-primary">شروع جمع‌آوری</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="panel panel-info">
+            <div class="panel-heading">جمع‌آوری براساس نام کاربری</div>
+            <div class="panel-body">
+                <form method="POST" action="{{ url_for('collectorview.collect_username') }}">
+                    <div class="form-group">
+                        <label for="username">نام کاربری:</label>
+                        <div class="input-group">
+                            <span class="input-group-addon">@</span>
+                            <input type="text" class="form-control" id="username" name="username" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="max_tweets_username">حداکثر توییت‌ها:</label>
+                        <input type="number" class="form-control" id="max_tweets_username" name="max_tweets" value="100" min="1" max="1000">
+                    </div>
+                    <button type="submit" class="btn btn-info">شروع جمع‌آوری</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="panel panel-default">
+            <div class="panel-heading">راهنما</div>
+            <div class="panel-body">
+                <p>از این صفحه می‌توانید توییت‌ها را براساس کلمه کلیدی یا نام کاربری جمع‌آوری کنید. برای دیدن نتایج به بخش توییت‌ها مراجعه کنید.</p>
+                <ul>
+                    <li><strong>کلمه کلیدی</strong>: جمع‌آوری توییت‌هایی که شامل کلمه کلیدی مورد نظر باشند.</li>
+                    <li><strong>نام کاربری</strong>: جمع‌آوری توییت‌های منتشر شده توسط کاربر مورد نظر.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

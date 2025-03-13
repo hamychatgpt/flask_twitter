@@ -8,7 +8,8 @@ from flask_login import current_user
 from .config import config_by_name
 from .models import db
 from .auth.utils import login_manager
-from .twitter import twitter_api  # اضافه کردن این خط
+from .twitter import twitter_api
+from .extensions import migrate, bootstrap, scheduler
 
 def create_app(config_name='default'):
     """Application factory - ایجاد و پیکربندی اپلیکیشن Flask"""
@@ -30,11 +31,15 @@ def create_app(config_name='default'):
     # پیکربندی پایگاه داده
     db.init_app(app)
     
+    # پیکربندی کتابخانه‌های جدید
+    migrate.init_app(app, db)
+    bootstrap.init_app(app)
+    
     # پیکربندی مدیریت ورود به سیستم
     login_manager.init_app(app)
     
     # مقداردهی اولیه افزونه TwitterAPI
-    twitter_api.init_app(app)  # اضافه کردن این خط
+    twitter_api.init_app(app)
     
     # ثبت بلوپرینت‌ها
     from .auth import auth_bp
@@ -45,6 +50,14 @@ def create_app(config_name='default'):
     
     from .api import api_bp
     app.register_blueprint(api_bp)
+    
+    # ثبت بلوپرینت جدید collector
+    from .collector import collector_bp
+    app.register_blueprint(collector_bp)
+    
+    # تنظیم Flask-Admin
+    from .admin import init_app as init_admin
+    init_admin(app)
     
     # ثبت مدیریت خطاها
     register_error_handlers(app)
@@ -69,14 +82,16 @@ def create_app(config_name='default'):
             'current_user': current_user
         }
     
-    # مسیر ساده برای آزمایش اولیه
-    @app.route('/hello')
-    def hello():
-        return 'سلام، تحلیلگر توییتر!'
+    # پیکربندی و شروع زمان‌بندی
+    scheduler.init_app(app)
     
-    # بازگرداندن اپلیکیشن پیکربندی شده
+    # فقط در محیط تولید یا وقتی آگاهانه زمان‌بندی را فعال می‌کنیم
+    if app.config.get('SCHEDULER_ENABLED', False):
+        scheduler.start()
+    
     return app
 
+# فانکشن‌های کمکی بدون تغییر
 def register_error_handlers(app):
     """ثبت توابع مدیریت خطا"""
     @app.errorhandler(404)
@@ -100,7 +115,3 @@ def configure_logging(app):
         app.logger.addHandler(file_handler)
         app.logger.setLevel(logging.INFO)
         app.logger.info('Twitter Analyzer startup')
-
-    # ثبت دستورات CLI 
-    from .cli import init_app as init_cli
-    init_cli(app)

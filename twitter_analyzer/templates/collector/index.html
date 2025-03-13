@@ -1,0 +1,142 @@
+<!-- twitter_analyzer/templates/collector/index.html -->
+{% extends "base.html" %}
+
+{% block title %}جمع‌آوری توییت‌ها{% endblock %}
+
+{% block content %}
+<div class="collector-container">
+    <h1>جمع‌آوری توییت‌ها</h1>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="panel panel-primary">
+                <div class="panel-heading">جمع‌آوری براساس کلمه کلیدی</div>
+                <div class="panel-body">
+                    <form id="keyword-form">
+                        <div class="form-group">
+                            <label for="keyword">کلمه کلیدی:</label>
+                            <input type="text" class="form-control" id="keyword" name="keyword" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="max_tweets_keyword">حداکثر توییت‌ها:</label>
+                            <input type="number" class="form-control" id="max_tweets_keyword" name="max_tweets" value="100" min="1" max="1000">
+                        </div>
+                        <button type="submit" class="btn btn-primary">شروع جمع‌آوری</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="panel panel-info">
+                <div class="panel-heading">جمع‌آوری براساس نام کاربری</div>
+                <div class="panel-body">
+                    <form id="username-form">
+                        <div class="form-group">
+                            <label for="username">نام کاربری:</label>
+                            <div class="input-group">
+                                <span class="input-group-addon">@</span>
+                                <input type="text" class="form-control" id="username" name="username" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="max_tweets_username">حداکثر توییت‌ها:</label>
+                            <input type="number" class="form-control" id="max_tweets_username" name="max_tweets" value="100" min="1" max="1000">
+                        </div>
+                        <button type="submit" class="btn btn-info">شروع جمع‌آوری</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="result-panel" class="panel panel-success" style="display: none;">
+        <div class="panel-heading">نتیجه جمع‌آوری</div>
+        <div class="panel-body">
+            <div id="result-message"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // فرم جمع‌آوری کلمه کلیدی
+        $('#keyword-form').submit(function(e) {
+            e.preventDefault();
+            
+            const keyword = $('#keyword').val();
+            const maxTweets = $('#max_tweets_keyword').val();
+            
+            if (!keyword) {
+                alert('لطفاً کلمه کلیدی را وارد کنید');
+                return;
+            }
+            
+            // نمایش وضعیت بارگیری
+            $('#result-panel').show();
+            $('#result-message').html('<div class="alert alert-info">در حال جمع‌آوری توییت‌ها با کلمه کلیدی "' + keyword + '"...</div>');
+            
+            // ارسال درخواست
+            $.ajax({
+                url: '{{ url_for("collector.collect_keyword") }}',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    keyword: keyword,
+                    max_tweets: maxTweets
+                }),
+                success: function(response) {
+                    $('#result-message').html('<div class="alert alert-success">' + response.message + '</div>');
+                },
+                error: function(xhr) {
+                    let errorMsg = 'خطا در جمع‌آوری توییت‌ها';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMsg = xhr.responseJSON.message;
+                    }
+                    $('#result-message').html('<div class="alert alert-danger">' + errorMsg + '</div>');
+                }
+            });
+        });
+        
+        // فرم جمع‌آوری نام کاربری
+        $('#username-form').submit(function(e) {
+            e.preventDefault();
+            
+            const username = $('#username').val();
+            const maxTweets = $('#max_tweets_username').val();
+            
+            if (!username) {
+                alert('لطفاً نام کاربری را وارد کنید');
+                return;
+            }
+            
+            // نمایش وضعیت بارگیری
+            $('#result-panel').show();
+            $('#result-message').html('<div class="alert alert-info">در حال جمع‌آوری توییت‌های کاربر @' + username + '...</div>');
+            
+            // ارسال درخواست
+            $.ajax({
+                url: '{{ url_for("collector.collect_username") }}',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    username: username,
+                    max_tweets: maxTweets
+                }),
+                success: function(response) {
+                    $('#result-message').html('<div class="alert alert-success">' + response.message + '</div>');
+                },
+                error: function(xhr) {
+                    let errorMsg = 'خطا در جمع‌آوری توییت‌ها';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMsg = xhr.responseJSON.message;
+                    }
+                    $('#result-message').html('<div class="alert alert-danger">' + errorMsg + '</div>');
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}
