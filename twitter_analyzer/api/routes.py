@@ -1,6 +1,6 @@
 from flask import jsonify, request
 from . import api_bp
-from twitter_analyzer.twitter.twitter_api_old_version import TwitterAPI
+from twitter_analyzer.twitter.twitter_api import TwitterAPI
 
 @api_bp.route('/stats')
 def get_stats():
@@ -29,6 +29,6 @@ def search():
     
     # استفاده از API توییتر
     twitter_api = TwitterAPI()
-    results = twitter_api.search_tweets(query, count)
+    results = twitter_api.search_tweets(query)
     
     return jsonify(results)

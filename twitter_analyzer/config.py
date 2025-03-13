@@ -10,8 +10,10 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # تنظیمات API توییتر
+    # تنظیمات API توییتر
     TWITTER_API_KEY = os.environ.get('TWITTER_API_KEY', '')
-    TWITTER_API_SECRET = os.environ.get('TWITTER_API_SECRET', '')
+    TWITTER_CACHE_SIZE = int(os.environ.get('TWITTER_CACHE_SIZE', 1000))
+    TWITTER_CACHE_TTL = int(os.environ.get('TWITTER_CACHE_TTL', 300))  # 5 دقیقه
     
     # تنظیمات جلسه
     PERMANENT_SESSION_LIFETIME = timedelta(days=30)
