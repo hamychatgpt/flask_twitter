@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    {% if admin_view.category %}{{ admin_view.category }} - {% endif %}{{ admin_view.name }} - {{ admin_view.admin.name }}
+{% endblock %}
+
+{% block head %}
+    {{ super() }}
+    <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/bootstrap-rtl.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/admin.css') }}" rel="stylesheet">
+    <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-2">
+            <ul class="nav flex-column nav-pills">
+                {% for item in admin_view.admin.menu() %}
+                    {% if item.is_accessible() and item.is_visible() %}
+                        {% if item.is_category() %}
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button">
+                                    {{ item.name }}
+                                </a>
+                                <div class="dropdown-menu">
+                                    {% for child in item.get_children() %}
+                                        {% if child.is_accessible() and child.is_visible() %}
+                                            <a class="dropdown-item" href="{{ child.get_url() }}">{{ child.name }}</a>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </li>
+                        {% else %}
+                            <li class="nav-item">
+                                <a class="nav-link{% if item.is_active(admin_view) %} active{% endif %}" href="{{ item.get_url() }}">{{ item.name }}</a>
+                            </li>
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="col-md-10">
+            {% block admin_content %}
+                {% if admin_view.name %}
+                    <h1>{{ admin_view.name }}</h1>
+                {% endif %}
+                {{ content }}
+            {% endblock %}
+        </div>
+    </div>
+</div>
+{% endblock %}

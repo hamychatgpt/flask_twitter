@@ -8,9 +8,11 @@ from ..models.hashtag import Hashtag
 from ..models.mention import Mention
 from ..models.collection import Collection, CollectionRule
 
-# ایجاد نمونه Admin
-admin = Admin(name='تحلیلگر توییتر', template_mode='bootstrap3')
-
+# ایجاد نمونه Admin با قالب پایه سفارشی
+admin = Admin(name='تحلیلگر توییتر', 
+              template_mode='bootstrap3', 
+              base_template='admin/custom_base.html')
+              
 class SecureModelView(ModelView):
     """کلاس پایه برای محافظت از بخش Admin"""
     def is_accessible(self):

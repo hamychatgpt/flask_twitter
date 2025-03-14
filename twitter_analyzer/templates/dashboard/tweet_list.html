@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+
+{% block title %}لیست توییت‌ها{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>لیست توییت‌ها</h1>
+    
+    <!-- فرم جستجو -->
+    <div class="search-section mb-4">
+        <form method="GET" action="{{ url_for('dashboard.tweet_list') }}" class="search-form">
+            <div class="row">
+                <div class="col-md-8">
+                    <input type="text" name="q" class="form-control" placeholder="جستجو در متن توییت‌ها..." value="{{ request.args.get('q', '') }}">
+                </div>
+                <div class="col-md-2">
+                    <select name="sort" class="form-control">
+                        <option value="recent" {% if request.args.get('sort') == 'recent' %}selected{% endif %}>جدیدترین</option>
+                        <option value="popular" {% if request.args.get('sort') == 'popular' %}selected{% endif %}>محبوب‌ترین</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">جستجو</button>
+                </div>
+            </div>
+        </form>
+    </div>
+    
+    <!-- نمایش توییت‌ها -->
+    <div class="tweet-list">
+        {% if tweets %}
+            {% for tweet in tweets %}
+                <div class="tweet-card">
+                    <div class="tweet-header">
+                        <img src="{{ tweet.twitter_user.profile_image_url or url_for('static', filename='img/default-avatar.png') }}" class="tweet-avatar" alt="تصویر پروفایل">
+                        <div class="tweet-user-info">
+                            <div class="tweet-name">{{ tweet.twitter_user.display_name or 'کاربر' }}</div>
+                            <div class="tweet-username">@{{ tweet.twitter_user.username }}</div>
+                        </div>
+                        <div class="tweet-date" title="{{ tweet.twitter_created_at }}">
+                            {{ tweet.twitter_created_at.strftime('%Y/%m/%d %H:%M') }}
+                        </div>
+                    </div>
+                    <div class="tweet-body">
+                        {{ tweet.text }}
+                    </div>
+                    <div class="tweet-footer">
+                        <span class="tweet-stat"><i class="fa fa-heart"></i> {{ tweet.likes_count }}</span>
+                        <span class="tweet-stat"><i class="fa fa-retweet"></i> {{ tweet.retweets_count }}</span>
+                        <span class="tweet-stat"><i class="fa fa-reply"></i> {{ tweet.replies_count }}</span>
+                    </div>
+                    {% if tweet.hashtags %}
+                    <div class="tweet-hashtags">
+                        {% for hashtag in tweet.hashtags %}
+                            <a href="{{ url_for('dashboard.tweet_list', hashtag=hashtag.text) }}" class="hashtag">#{{ hashtag.text }}</a>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+            
+            <!-- پیجینیشن -->
+            {% if pagination and pagination.pages > 1 %}
+            <div class="pagination-container">
+                <ul class="pagination">
+                    {% if pagination.has_prev %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('dashboard.tweet_list', page=pagination.prev_num, **request.args) }}">&laquo; قبلی</a>
+                        </li>
+                    {% endif %}
+                    
+                    {% for page_num in pagination.iter_pages(left_edge=2, left_current=2, right_current=3, right_edge=2) %}
+                        {% if page_num %}
+                            {% if page_num == pagination.page %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ page_num }}</span>
+                                </li>
+                            {% else %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('dashboard.tweet_list', page=page_num, **request.args) }}">{{ page_num }}</a>
+                                </li>
+                            {% endif %}
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if pagination.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('dashboard.tweet_list', page=pagination.next_num, **request.args) }}">بعدی &raquo;</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+            {% endif %}
+            
+        {% else %}
+            <div class="alert alert-info">
+                <p>هیچ توییتی یافت نشد. لطفاً جستجوی دیگری انجام دهید یا از بخش جمع‌آوری برای دریافت توییت‌های جدید استفاده کنید.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block title %}مدیریت توییت‌ها{% endblock %}
+
+{% block content %}
+<div class="admin-tweets-container">
+    <h1>مدیریت توییت‌ها</h1>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-container">
+                {% for category, message in messages %}
+                    <div class="flash {{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+    
+    <!-- فیلترهای جستجو -->
+    <div class="admin-section search-filters">
+        <h2>جستجو و فیلتر</h2>
+        <form method="GET" action="{{ url_for('admin.tweets') }}" class="filter-form">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="keyword">کلیدواژه:</label>
+                    <input type="text" id="keyword" name="keyword" class="form-control" value="{{ request.args.get('keyword', '') }}">
+                </div>
+                <div class="form-group">
+                    <label for="username">نام کاربری:</label>
+                    <input type="text" id="username" name="username" class="form-control" value="{{ request.args.get('username', '') }}">
+                </div>
+                <div class="form-group">
+                    <label for="date_from">از تاریخ:</label>
+                    <input type="date" id="date_from" name="date_from" class="form-control" value="{{ request.args.get('date_from', '') }}">
+                </div>
+                <div class="form-group">
+                    <label for="date_to">تا تاریخ:</label>
+                    <input type="date" id="date_to" name="date_to" class="form-control" value="{{ request.args.get('date_to', '') }}">
+                </div>
+                <div class="form-group button-group">
+                    <button type="submit" class="btn">جستجو</button>
+                    <a href="{{ url_for('admin.tweets') }}" class="btn btn-secondary">پاک کردن فیلترها</a>
+                </div>
+            </div>
+        </form>
+    </div>
+    
+    <!-- جدول توییت‌ها -->
+    <div class="admin-section">
+        <h2>لیست توییت‌ها</h2>
+        <div class="table-responsive">
+            <table class="tweets-table">
+                <thead>
+                    <tr>
+                        <th>شناسه</th>
+                        <th>متن توییت</th>
+                        <th>نویسنده</th>
+                        <th>تاریخ</th>
+                        <th>عملیات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if tweets %}
+                        {% for tweet in tweets %}
+                            <tr>
+                                <td>{{ tweet.id }}</td>
+                                <td class="tweet-text">{{ tweet.text }}</td>
+                                <td>{{ tweet.username }}</td>
+                                <td>{{ tweet.created }}</td>
+                                <td class="tweet-actions">
+                                    <button class="btn-icon view-tweet" data-tweet-id="{{ tweet.id }}" title="مشاهده">
+                                        <span class="icon">👁️</span>
+                                    </button>
+                                    <button class="btn-icon delete-tweet" data-tweet-id="{{ tweet.id }}" title="حذف">
+                                        <span class="icon">🗑️</span>
+                                    </button>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center">هیچ توییتی یافت نشد.</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- صفحه‌بندی -->
+    {% if total_pages > 1 %}
+        <div class="pagination">
+            {% if page > 1 %}
+                <a href="{{ url_for('admin.tweets', page=page-1, **request.args) }}" class="pagination-item">قبلی</a>
+            {% endif %}
+            
+            {% for p in range(1, total_pages + 1) %}
+                {% if p == page %}
+                    <span class="pagination-item active">{{ p }}</span>
+                {% elif p == 1 or p == total_pages or (p >= page - 2 and p <= page + 2) %}
+                    <a href="{{ url_for('admin.tweets', page=p, **request.args) }}" class="pagination-item">{{ p }}</a>
+                {% elif p == page - 3 or p == page + 3 %}
+                    <span class="pagination-item dots">...</span>
+                {% endif %}
+            {% endfor %}
+            
+            {% if page < total_pages %}
+                <a href="{{ url_for('admin.tweets', page=page+1, **request.args) }}" class="pagination-item">بعدی</a>
+            {% endif %}
+        </div>
+    {% endif %}
+    
+    <div class="navigation-buttons">
+        <a href="{{ url_for('admin.index') }}" class="btn btn-secondary">بازگشت به پنل مدیریت</a>
+    </div>
+    
+    <!-- مودال مشاهده توییت -->
+    <div id="tweet-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>مشاهده توییت</h2>
+            <div class="tweet-details">
+                <div id="tweet-modal-content">
+                    <!-- محتوای توییت اینجا قرار می‌گیرد -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // اسکریپت برای نمایش مودال
+    document.addEventListener('DOMContentLoaded', function() {
+        const modal = document.getElementById('tweet-modal');
+        const modalContent = document.getElementById('tweet-modal-content');
+        const closeBtn = document.querySelector('.close');
+        
+        // دکمه‌های مشاهده توییت
+        const viewButtons = document.querySelectorAll('.view-tweet');
+        viewButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const tweetId = this.getAttribute('data-tweet-id');
+                const tweetText = this.closest('tr').querySelector('.tweet-text').textContent;
+                
+                // نمایش محتوای توییت در مودال
+                modalContent.innerHTML = `
+                    <p><strong>شناسه:</strong> ${tweetId}</p>
+                    <p><strong>متن توییت:</strong></p>
+                    <p>${tweetText}</p>
+                `;
+                
+                // نمایش مودال
+                modal.style.display = 'block';
+            });
+        });
+        
+        // دکمه‌های حذف توییت - اضافه کردن تأییدیه
+        const deleteButtons = document.querySelectorAll('.delete-tweet');
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const tweetId = this.getAttribute('data-tweet-id');
+                if (confirm('آیا از حذف این توییت اطمینان دارید؟')) {
+                    // در اینجا می‌توانید یک درخواست AJAX برای حذف توییت ارسال کنید
+                    alert('این قابلیت هنوز پیاده‌سازی نشده است.');
+                }
+            });
+        });
+        
+        // بستن مودال
+        closeBtn.addEventListener('click', function() {
+            modal.style.display = 'none';
+        });
+        
+        // بستن مودال با کلیک خارج از آن
+        window.addEventListener('click', function(event) {
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        });
+    });
+</script>
+{% endblock %}

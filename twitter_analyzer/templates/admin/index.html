@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}پنل مدیریت{% endblock %}
+
+{% block content %}
+<div class="admin-dashboard-container">
+    <h1>پنل مدیریت تحلیلگر توییتر</h1>
+    
+    <div class="stats-overview">
+        <div class="stat-card">
+            <h3>آمار کلی</h3>
+            <div class="text-center">
+                <div class="stat-value">{{ data.total_tweets }}</div>
+                <div class="stat-label">تعداد کل توییت‌ها</div>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <h3>کاربران سیستم</h3>
+            <div class="text-center">
+                <div class="stat-value">{{ data.total_users }}</div>
+                <div class="stat-label">تعداد کاربران</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="admin-section">
+            <h2>عملیات مدیریتی</h2>
+            <div class="admin-actions">
+                <a href="{{ url_for('collector.index') }}" class="btn">جمع‌آوری توییت‌ها</a>
+                <a href="{{ url_for('collector.index') }}" class="btn">مدیریت توییت‌ها</a>
+                <a href="#" class="btn">مدیریت کاربران</a>
+                <a href="#" class="btn">تنظیمات سیستم</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="admin-section">
+            <h2>فعالیت‌های اخیر</h2>
+            <ul class="activity-list">
+                {% if data.recent_activities %}
+                    {% for activity in data.recent_activities %}
+                        <li>{{ activity }}</li>
+                    {% endfor %}
+                {% else %}
+                    <li>هیچ فعالیتی ثبت نشده است.</li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="admin-section">
+            <h2>راهنمای سریع</h2>
+            <p>از این پنل می‌توانید عملیات مدیریتی سیستم تحلیل توییتر را انجام دهید:</p>
+            <ul>
+                <li><strong>جمع‌آوری توییت‌ها:</strong> جمع‌آوری توییت‌ها بر اساس کلیدواژه یا نام کاربری</li>
+                <li><strong>مدیریت توییت‌ها:</strong> مشاهده، ویرایش یا حذف توییت‌های جمع‌آوری شده</li>
+                <li><strong>مدیریت کاربران:</strong> مدیریت کاربران سیستم، ارتقا به سطح ادمین و ...</li>
+                <li><strong>تنظیمات سیستم:</strong> تنظیمات پیکربندی سیستم، محدودیت‌ها و پارامترها</li>
+            </ul>
+        </div>
+    </div>
+    
+    <div class="navigation-buttons">
+        <a href="{{ url_for('dashboard.index') }}" class="btn btn-secondary">بازگشت به داشبورد</a>
+    </div>
+</div>
+{% endblock %}
