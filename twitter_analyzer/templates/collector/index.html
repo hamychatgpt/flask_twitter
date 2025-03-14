@@ -3,205 +3,284 @@
 {% block title %}جمع‌آوری توییت‌ها{% endblock %}
 
 {% block content %}
-<div class="collector-container">
-    <h1>جمع‌آوری توییت‌ها</h1>
-    
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            <div class="flash-container">
-                {% for category, message in messages %}
-                    <div class="flash {{ category }}">{{ message }}</div>
-                {% endfor %}
-            </div>
-        {% endif %}
-    {% endwith %}
-    
+<div class="container-fluid pt-4">
     <div class="row">
-        <div class="col-md-6">
-            <div class="panel panel-primary">
-                <div class="panel-heading">جمع‌آوری براساس کلمه کلیدی</div>
-                <div class="panel-body">
-                    <form id="keyword-form" method="POST" action="{{ url_for('collector.collect_keyword') }}">
+        <div class="col-md-12">
+            <h1 class="mb-4">جمع‌آوری توییت‌ها</h1>
+
+            <!-- وضعیت و پیام‌ها -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <!-- تب‌های روش‌های جمع‌آوری -->
+            <ul class="nav nav-tabs" id="collectionTabs" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link active" id="keyword-tab" data-toggle="tab" href="#keyword" role="tab" aria-controls="keyword" aria-selected="true">کلمه کلیدی</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="username-tab" data-toggle="tab" href="#username" role="tab" aria-controls="username" aria-selected="false">نام کاربری</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="hashtag-tab" data-toggle="tab" href="#hashtag" role="tab" aria-controls="hashtag" aria-selected="false">هشتگ</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="mentions-tab" data-toggle="tab" href="#mentions" role="tab" aria-controls="mentions" aria-selected="false">منشن‌ها</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="list-tab" data-toggle="tab" href="#list" role="tab" aria-controls="list" aria-selected="false">لیست</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="replies-tab" data-toggle="tab" href="#replies" role="tab" aria-controls="replies" aria-selected="false">پاسخ‌های توییت</a>
+                </li>
+            </ul>
+            
+            <!-- محتوای تب‌ها -->
+            <div class="tab-content p-3 border border-top-0 rounded-bottom mb-4" id="collectionTabsContent">
+                <!-- جمع‌آوری با کلمه کلیدی -->
+                <div class="tab-pane fade show active" id="keyword" role="tabpanel" aria-labelledby="keyword-tab">
+                    <form action="{{ url_for('collector.collect_keyword') }}" method="post">
                         <div class="form-group">
                             <label for="keyword">کلمه کلیدی:</label>
-                            <input type="text" class="form-control" id="keyword" name="keyword" required>
+                            <input type="text" class="form-control" id="keyword" name="keyword" required placeholder="کلمه کلیدی برای جستجو" dir="auto">
                         </div>
                         <div class="form-group">
-                            <label for="max_tweets_keyword">حداکثر توییت‌ها:</label>
-                            <input type="number" class="form-control" id="max_tweets_keyword" name="max_tweets" value="100" min="1" max="1000">
+                            <label for="max_tweets_keyword">حداکثر تعداد توییت:</label>
+                            <input type="number" class="form-control" id="max_tweets_keyword" name="max_tweets" min="1" max="1000" value="100">
                         </div>
                         <button type="submit" class="btn btn-primary">شروع جمع‌آوری</button>
                     </form>
+                    <div class="mt-2">
+                        <small class="text-muted">راهنما: می‌توانید از عملگرهای جستجوی پیشرفته مانند AND، OR، NOT استفاده کنید.</small>
+                    </div>
                 </div>
-            </div>
-        </div>
-        
-        <div class="col-md-6">
-            <div class="panel panel-info">
-                <div class="panel-heading">جمع‌آوری براساس نام کاربری</div>
-                <div class="panel-body">
-                    <form id="username-form" method="POST" action="{{ url_for('collector.collect_username') }}">
+                
+                <!-- جمع‌آوری با نام کاربری -->
+                <div class="tab-pane fade" id="username" role="tabpanel" aria-labelledby="username-tab">
+                    <form action="{{ url_for('collector.collect_username') }}" method="post">
                         <div class="form-group">
                             <label for="username">نام کاربری:</label>
                             <div class="input-group">
-                                <span class="input-group-addon">@</span>
-                                <input type="text" class="form-control" id="username" name="username" required>
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">@</span>
+                                </div>
+                                <input type="text" class="form-control" id="username" name="username" required placeholder="نام کاربری بدون @" dir="ltr">
                             </div>
                         </div>
                         <div class="form-group">
-                            <label for="max_tweets_username">حداکثر توییت‌ها:</label>
-                            <input type="number" class="form-control" id="max_tweets_username" name="max_tweets" value="100" min="1" max="1000">
+                            <label for="max_tweets_username">حداکثر تعداد توییت:</label>
+                            <input type="number" class="form-control" id="max_tweets_username" name="max_tweets" min="1" max="1000" value="100">
                         </div>
-                        <button type="submit" class="btn btn-info">شروع جمع‌آوری</button>
+                        <button type="submit" class="btn btn-primary">شروع جمع‌آوری</button>
                     </form>
+                    <div class="mt-2">
+                        <small class="text-muted">راهنما: جمع‌آوری توییت‌های اخیر یک کاربر توییتر.</small>
+                    </div>
+                </div>
+                
+                <!-- جمع‌آوری با هشتگ -->
+                <div class="tab-pane fade" id="hashtag" role="tabpanel" aria-labelledby="hashtag-tab">
+                    <form action="{{ url_for('collector.collect_hashtag') }}" method="post">
+                        <div class="form-group">
+                            <label for="hashtag">هشتگ:</label>
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">#</span>
+                                </div>
+                                <input type="text" class="form-control" id="hashtag" name="hashtag" required placeholder="هشتگ مورد نظر بدون #" dir="auto">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="max_tweets_hashtag">حداکثر تعداد توییت:</label>
+                            <input type="number" class="form-control" id="max_tweets_hashtag" name="max_tweets" min="1" max="1000" value="100">
+                        </div>
+                        <button type="submit" class="btn btn-primary">شروع جمع‌آوری</button>
+                    </form>
+                    <div class="mt-2">
+                        <small class="text-muted">راهنما: جمع‌آوری توییت‌های اخیر حاوی یک هشتگ خاص.</small>
+                    </div>
+                </div>
+                
+                <!-- جمع‌آوری منشن‌ها -->
+                <div class="tab-pane fade" id="mentions" role="tabpanel" aria-labelledby="mentions-tab">
+                    <form action="{{ url_for('collector.collect_mentions') }}" method="post">
+                        <div class="form-group">
+                            <label for="mentions_username">نام کاربری:</label>
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">@</span>
+                                </div>
+                                <input type="text" class="form-control" id="mentions_username" name="username" required placeholder="نام کاربری بدون @" dir="ltr">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="max_tweets_mentions">حداکثر تعداد توییت:</label>
+                            <input type="number" class="form-control" id="max_tweets_mentions" name="max_tweets" min="1" max="1000" value="100">
+                        </div>
+                        <button type="submit" class="btn btn-primary">شروع جمع‌آوری</button>
+                    </form>
+                    <div class="mt-2">
+                        <small class="text-muted">راهنما: جمع‌آوری توییت‌هایی که یک کاربر خاص در آنها منشن شده است.</small>
+                    </div>
+                </div>
+                
+                <!-- جمع‌آوری لیست -->
+                <div class="tab-pane fade" id="list" role="tabpanel" aria-labelledby="list-tab">
+                    <form action="{{ url_for('collector.collect_list_tweets') }}" method="post">
+                        <div class="form-group">
+                            <label for="list_id">شناسه لیست:</label>
+                            <input type="text" class="form-control" id="list_id" name="list_id" required placeholder="شناسه عددی لیست" dir="ltr">
+                        </div>
+                        <div class="form-group">
+                            <label for="max_tweets_list">حداکثر تعداد توییت:</label>
+                            <input type="number" class="form-control" id="max_tweets_list" name="max_tweets" min="1" max="1000" value="100">
+                        </div>
+                        <button type="submit" class="btn btn-primary">شروع جمع‌آوری</button>
+                    </form>
+                    <div class="mt-2">
+                        <small class="text-muted">راهنما: جمع‌آوری توییت‌های اخیر یک لیست توییتر.</small>
+                    </div>
+                </div>
+                
+                <!-- جمع‌آوری پاسخ‌های توییت -->
+                <div class="tab-pane fade" id="replies" role="tabpanel" aria-labelledby="replies-tab">
+                    <form action="{{ url_for('collector.collect_tweet_replies') }}" method="post">
+                        <div class="form-group">
+                            <label for="tweet_id">شناسه توییت:</label>
+                            <input type="text" class="form-control" id="tweet_id" name="tweet_id" required placeholder="شناسه عددی توییت" dir="ltr">
+                        </div>
+                        <div class="form-group">
+                            <label for="max_tweets_replies">حداکثر تعداد پاسخ:</label>
+                            <input type="number" class="form-control" id="max_tweets_replies" name="max_tweets" min="1" max="1000" value="100">
+                        </div>
+                        <button type="submit" class="btn btn-primary">شروع جمع‌آوری</button>
+                    </form>
+                    <div class="mt-2">
+                        <small class="text-muted">راهنما: جمع‌آوری پاسخ‌های یک توییت خاص.</small>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-    
-    <div id="result-panel" class="panel panel-success" style="display: none;">
-        <div class="panel-heading">نتیجه جمع‌آوری</div>
-        <div class="panel-body">
-            <div id="result-message"></div>
+
+    <!-- نمایش مجموعه‌های جمع‌آوری شده اخیر -->
+    <div class="row">
+        <div class="col-md-12">
+            <h2 class="mb-3">مجموعه‌های اخیر</h2>
+            {% if collections %}
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>نام</th>
+                                <th>نوع</th>
+                                <th>تعداد توییت</th>
+                                <th>وضعیت</th>
+                                <th>تاریخ شروع</th>
+                                <th>عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for collection in collections %}
+                                <tr>
+                                    <td>{{ collection.name }}</td>
+                                    <td>
+                                        {% if collection.rules.count() > 0 %}
+                                            {% set rule = collection.rules.first() %}
+                                            {% if rule.rule_type == 'keyword' %}
+                                                کلمه کلیدی
+                                            {% elif rule.rule_type == 'username' %}
+                                                نام کاربری
+                                            {% elif rule.rule_type == 'hashtag' %}
+                                                هشتگ
+                                            {% elif rule.rule_type == 'mention' %}
+                                                منشن
+                                            {% elif rule.rule_type == 'list' %}
+                                                لیست
+                                            {% elif rule.rule_type == 'tweet_replies' %}
+                                                پاسخ‌های توییت
+                                            {% else %}
+                                                {{ rule.rule_type }}
+                                            {% endif %}
+                                        {% else %}
+                                            نامشخص
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ collection.total_tweets }}</td>
+                                    <td>
+                                        {% if collection.status == 'completed' %}
+                                            <span class="badge badge-success">تکمیل شده</span>
+                                        {% elif collection.status == 'running' %}
+                                            <span class="badge badge-primary">در حال اجرا</span>
+                                        {% elif collection.status == 'failed' %}
+                                            <span class="badge badge-danger">خطا</span>
+                                        {% else %}
+                                            <span class="badge badge-secondary">{{ collection.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ jalali_date(collection.started_at) }}</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{{ url_for('collector.view_collection', collection_id=collection.id) }}" class="btn btn-info">مشاهده</a>
+                                            <button type="button" class="btn btn-danger delete-collection" data-id="{{ collection.id }}" data-name="{{ collection.name }}">حذف</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info">هنوز هیچ مجموعه‌ای جمع‌آوری نشده است.</div>
+            {% endif %}
         </div>
     </div>
-    
-    {% if collections %}
-    <div class="panel panel-default">
-        <div class="panel-heading">جمع‌آوری‌های اخیر</div>
-        <div class="panel-body">
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>نام</th>
-                        <th>تاریخ شروع</th>
-                        <th>تعداد توییت‌ها</th>
-                        <th>وضعیت</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for collection in collections %}
-                    <tr>
-                        <td>{{ collection.name }}</td>
-                        <td>{{ collection.started_at.strftime('%Y/%m/%d %H:%M') if collection.started_at else '' }}</td>
-                        <td>{{ collection.total_tweets }}</td>
-                        <td>
-                            {% if collection.status == 'completed' %}
-                                <span class="label label-success">تکمیل شده</span>
-                            {% elif collection.status == 'running' %}
-                                <span class="label label-warning">در حال اجرا</span>
-                            {% elif collection.status == 'failed' %}
-                                <span class="label label-danger">خطا</span>
-                            {% else %}
-                                <span class="label label-default">{{ collection.status }}</span>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+</div>
+
+<!-- Modal تأیید حذف -->
+<div class="modal fade" id="deleteCollectionModal" tabindex="-1" role="dialog" aria-labelledby="deleteCollectionModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteCollectionModalLabel">تأیید حذف</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                آیا از حذف مجموعه "<span id="collectionNameToDelete"></span>" اطمینان دارید؟
+                <p class="text-danger mt-2">این عملیات غیرقابل بازگشت است و تمام توییت‌های مجموعه حذف خواهند شد.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">انصراف</button>
+                <form id="deleteCollectionForm" action="" method="post">
+                    <button type="submit" class="btn btn-danger">حذف</button>
+                </form>
+            </div>
         </div>
     </div>
-    {% endif %}
 </div>
 {% endblock %}
 
-{% block extra_js %}
-<!-- مطمئن شویم jQuery لود شده است -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+{% block scripts %}
+{{ super() }}
 <script>
     $(document).ready(function() {
-        console.log("jQuery loaded and script running"); // برای اشکال‌زدایی
-        
-        // فرم جمع‌آوری کلمه کلیدی
-        $('#keyword-form').submit(function(e) {
-            console.log("Keyword form submitted"); // برای اشکال‌زدایی
-            e.preventDefault();
-            
-            const keyword = $('#keyword').val();
-            const maxTweets = $('#max_tweets_keyword').val();
-            
-            if (!keyword) {
-                alert('لطفاً کلمه کلیدی را وارد کنید');
-                return;
-            }
-            
-            // نمایش وضعیت بارگیری
-            $('#result-panel').show();
-            $('#result-message').html('<div class="alert alert-info">در حال جمع‌آوری توییت‌ها با کلمه کلیدی "' + keyword + '"...</div>');
-            
-            // ارسال درخواست
-            $.ajax({
-                url: "{{ url_for('collector.collect_keyword') }}",
-                type: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify({
-                    keyword: keyword,
-                    max_tweets: maxTweets
-                }),
-                success: function(response) {
-                    console.log("Success response:", response); // برای اشکال‌زدایی
-                    $('#result-message').html('<div class="alert alert-success">' + response.message + '</div>');
-                    // بعد از موفقیت، صفحه را بارگذاری مجدد کنید تا لیست جمع‌آوری‌ها به‌روز شود
-                    setTimeout(function() {
-                        window.location.reload();
-                    }, 2000);
-                },
-                error: function(xhr, status, error) {
-                    console.log("Error:", xhr, status, error); // برای اشکال‌زدایی
-                    let errorMsg = 'خطا در جمع‌آوری توییت‌ها';
-                    if (xhr.responseJSON && xhr.responseJSON.message) {
-                        errorMsg = xhr.responseJSON.message;
-                    }
-                    $('#result-message').html('<div class="alert alert-danger">' + errorMsg + '</div>');
-                }
-            });
+        // نمایش مودال تأیید حذف مجموعه
+        $('.delete-collection').click(function() {
+            var collectionId = $(this).data('id');
+            var collectionName = $(this).data('name');
+            $('#collectionNameToDelete').text(collectionName);
+            $('#deleteCollectionForm').attr('action', "{{ url_for('collector.delete_collection', collection_id=0) }}".replace('0', collectionId));
+            $('#deleteCollectionModal').modal('show');
         });
         
-        // فرم جمع‌آوری نام کاربری
-        $('#username-form').submit(function(e) {
-            console.log("Username form submitted"); // برای اشکال‌زدایی
-            e.preventDefault();
-            
-            const username = $('#username').val();
-            const maxTweets = $('#max_tweets_username').val();
-            
-            if (!username) {
-                alert('لطفاً نام کاربری را وارد کنید');
-                return;
-            }
-            
-            // نمایش وضعیت بارگیری
-            $('#result-panel').show();
-            $('#result-message').html('<div class="alert alert-info">در حال جمع‌آوری توییت‌های کاربر @' + username + '...</div>');
-            
-            // ارسال درخواست
-            $.ajax({
-                url: "{{ url_for('collector.collect_username') }}",
-                type: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify({
-                    username: username,
-                    max_tweets: maxTweets
-                }),
-                success: function(response) {
-                    console.log("Success response:", response); // برای اشکال‌زدایی
-                    $('#result-message').html('<div class="alert alert-success">' + response.message + '</div>');
-                    // بعد از موفقیت، صفحه را بارگذاری مجدد کنید تا لیست جمع‌آوری‌ها به‌روز شود
-                    setTimeout(function() {
-                        window.location.reload();
-                    }, 2000);
-                },
-                error: function(xhr, status, error) {
-                    console.log("Error:", xhr, status, error); // برای اشکال‌زدایی
-                    let errorMsg = 'خطا در جمع‌آوری توییت‌ها';
-                    if (xhr.responseJSON && xhr.responseJSON.message) {
-                        errorMsg = xhr.responseJSON.message;
-                    }
-                    $('#result-message').html('<div class="alert alert-danger">' + errorMsg + '</div>');
-                }
-            });
-        });
+        // فعال‌سازی tooltip
+        $('[data-toggle="tooltip"]').tooltip();
     });
 </script>
 {% endblock %}

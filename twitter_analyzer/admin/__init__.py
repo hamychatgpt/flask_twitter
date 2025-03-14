@@ -9,6 +9,7 @@ from ..models.hashtag import Hashtag
 from ..models.mention import Mention
 from ..models.collection import Collection, CollectionRule
 from ..models.user import User
+from .views import CollectorAdminView
 
 class MyAdminIndexView(AdminIndexView):
     """نمای سفارشی برای صفحه اصلی پنل مدیریت"""
@@ -197,6 +198,12 @@ class TweetsManagementView(BaseView):
         
         tweet = Tweet.query.get_or_404(tweet_id)
         try:
+            # جدا کردن روابط قبل از حذف
+            tweet.hashtags = []
+            tweet.mentions = []
+            db.session.add(tweet)
+            db.session.flush()
+            
             db.session.delete(tweet)
             db.session.commit()
             
@@ -298,8 +305,7 @@ def init_app(app):
     admin.add_view(UserManagementView(name='مدیریت کاربران', endpoint='manage_users'))
     admin.add_view(SettingsView(name='تنظیمات سیستم', endpoint='settings'))
     
-    # حذف CollectorView از پنل ادمین و استفاده از بخش collector اصلی به جای آن
-    # from .views import CollectorView
-    # admin.add_view(CollectorView(name='جمع‌آوری جدید'))
+    # افزودن نمای جدید جمع‌آوری توییت‌ها
+    admin.add_view(CollectorAdminView(name='جمع‌آوری توییت‌ها', endpoint='collection_admin'))
     
     admin.init_app(app)

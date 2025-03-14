@@ -1,0 +1,315 @@
+{% extends "base.html" %}
+
+{% block title %}{{ collection.name }} - مشاهده مجموعه{% endblock %}
+
+{% block content %}
+<div class="container-fluid pt-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}">داشبورد</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('collector.index') }}">جمع‌آوری</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ collection.name }}</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <!-- وضعیت و پیام‌ها -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">اطلاعات مجموعه</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-bordered">
+                                <tr>
+                                    <th style="width: 150px;">نام:</th>
+                                    <td>{{ collection.name }}</td>
+                                </tr>
+                                <tr>
+                                    <th>توضیحات:</th>
+                                    <td>{{ collection.description }}</td>
+                                </tr>
+                                <tr>
+                                    <th>نوع جمع‌آوری:</th>
+                                    <td>
+                                        {% if collection.rules.count() > 0 %}
+                                            {% set rule = collection.rules.first() %}
+                                            {% if rule.rule_type == 'keyword' %}
+                                                کلمه کلیدی: <strong>{{ rule.value }}</strong>
+                                            {% elif rule.rule_type == 'username' %}
+                                                نام کاربری: <strong>@{{ rule.value }}</strong>
+                                            {% elif rule.rule_type == 'hashtag' %}
+                                                هشتگ: <strong>#{{ rule.value }}</strong>
+                                            {% elif rule.rule_type == 'mention' %}
+                                                منشن: <strong>@{{ rule.value }}</strong>
+                                            {% elif rule.rule_type == 'list' %}
+                                                لیست: <strong>{{ rule.value }}</strong>
+                                            {% elif rule.rule_type == 'tweet_replies' %}
+                                                پاسخ‌های توییت: <strong>{{ rule.value }}</strong>
+                                            {% else %}
+                                                {{ rule.rule_type }}: <strong>{{ rule.value }}</strong>
+                                            {% endif %}
+                                        {% else %}
+                                            نامشخص
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-bordered">
+                                <tr>
+                                    <th style="width: 150px;">وضعیت:</th>
+                                    <td>
+                                        {% if collection.status == 'completed' %}
+                                            <span class="badge badge-success">تکمیل شده</span>
+                                        {% elif collection.status == 'running' %}
+                                            <span class="badge badge-primary">در حال اجرا</span>
+                                        {% elif collection.status == 'failed' %}
+                                            <span class="badge badge-danger">خطا</span>
+                                        {% else %}
+                                            <span class="badge badge-secondary">{{ collection.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>تاریخ شروع:</th>
+                                    <td>{{ jalali_date(collection.started_at) }}</td>
+                                </tr>
+                                <tr>
+                                    <th>تاریخ پایان:</th>
+                                    <td>{{ jalali_date(collection.finished_at) if collection.finished_at else 'هنوز تکمیل نشده' }}</td>
+                                </tr>
+                                <tr>
+                                    <th>تعداد توییت‌ها:</th>
+                                    <td>{{ collection.total_tweets }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer text-left">
+                    <button class="btn btn-danger" id="deleteCollectionBtn" data-toggle="modal" data-target="#deleteCollectionModal">حذف مجموعه</button>
+                    <a href="{{ url_for('collector.index') }}" class="btn btn-secondary mr-2">بازگشت</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">توییت‌های جمع‌آوری شده</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <form action="{{ url_for('collector.view_collection', collection_id=collection.id) }}" method="get" class="form-inline justify-content-between">
+                            <div class="form-group mb-2">
+                                <label for="per_page" class="ml-2">تعداد توییت در هر صفحه:</label>
+                                <select class="form-control" id="per_page" name="per_page" onchange="this.form.submit()">
+                                    <option value="10" {% if request.args.get('per_page', '20') == '10' %}selected{% endif %}>10</option>
+                                    <option value="20" {% if request.args.get('per_page', '20') == '20' %}selected{% endif %}>20</option>
+                                    <option value="50" {% if request.args.get('per_page', '20') == '50' %}selected{% endif %}>50</option>
+                                    <option value="100" {% if request.args.get('per_page', '20') == '100' %}selected{% endif %}>100</option>
+                                </select>
+                            </div>
+                            <div class="form-group mb-2">
+                                <input type="text" class="form-control" name="search" placeholder="جستجو در توییت‌ها..." value="{{ request.args.get('search', '') }}">
+                                <button type="submit" class="btn btn-primary mr-2">جستجو</button>
+                                {% if request.args.get('search') %}
+                                    <a href="{{ url_for('collector.view_collection', collection_id=collection.id, per_page=request.args.get('per_page', 20)) }}" class="btn btn-secondary">حذف فیلتر</a>
+                                {% endif %}
+                            </div>
+                        </form>
+                    </div>
+
+                    {% if tweets %}
+                        <div class="tweet-container">
+                            {% for tweet in tweets %}
+                                <div class="card mb-3 tweet-card">
+                                    <div class="card-header bg-light">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                {% if tweet.twitter_user %}
+                                                    <img src="{{ tweet.twitter_user.profile_image_url|default('https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png') }}" 
+                                                        class="rounded-circle" width="32" height="32" alt="{{ tweet.twitter_user.username }}">
+                                                    <strong>{{ tweet.twitter_user.display_name }}</strong>
+                                                    <span class="text-muted">@{{ tweet.twitter_user.username }}</span>
+                                                {% else %}
+                                                    <span class="text-muted">نویسنده نامشخص</span>
+                                                {% endif %}
+                                            </div>
+                                            <small class="text-muted">{{ jalali_date(tweet.twitter_created_at) }}</small>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="card-text" dir="auto">{{ tweet.text }}</p>
+                                        
+                                        {% if tweet.hashtags %}
+                                            <div class="hashtags">
+                                                {% for hashtag in tweet.hashtags %}
+                                                    <span class="badge badge-primary">#{{ hashtag.text }}</span>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                        
+                                        {% if tweet.mentions %}
+                                            <div class="mentions">
+                                                {% for mention in tweet.mentions %}
+                                                    <span class="badge badge-info">@{{ mention.username }}</span>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                        
+                                        {% if tweet.has_media %}
+                                            <div class="media-indicator mt-2">
+                                                <i class="fas fa-image"></i> این توییت شامل تصویر یا ویدیو است
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="card-footer text-muted">
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <span><i class="far fa-heart"></i> {{ tweet.likes_count|default(0) }}</span>
+                                                <span class="ml-3"><i class="fas fa-retweet"></i> {{ tweet.retweets_count|default(0) }}</span>
+                                                <span class="ml-3"><i class="far fa-comment"></i> {{ tweet.replies_count|default(0) }}</span>
+                                            </div>
+                                            <div>
+                                                <a href="https://twitter.com/i/status/{{ tweet.twitter_id }}" target="_blank" class="btn btn-sm btn-outline-primary">مشاهده در توییتر</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        
+                        {% if pagination.pages > 1 %}
+                            <nav aria-label="Page navigation">
+                                <ul class="pagination justify-content-center">
+                                    {% if pagination.has_prev %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="{{ url_for('collector.view_collection', collection_id=collection.id, page=pagination.prev_num, per_page=request.args.get('per_page', 20), search=request.args.get('search', '')) }}">قبلی</a>
+                                        </li>
+                                    {% else %}
+                                        <li class="page-item disabled">
+                                            <a class="page-link" href="#" tabindex="-1">قبلی</a>
+                                        </li>
+                                    {% endif %}
+                                    
+                                    {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                                        {% if page_num %}
+                                            {% if page_num == pagination.page %}
+                                                <li class="page-item active">
+                                                    <a class="page-link" href="#">{{ page_num }}</a>
+                                                </li>
+                                            {% else %}
+                                                <li class="page-item">
+                                                    <a class="page-link" href="{{ url_for('collector.view_collection', collection_id=collection.id, page=page_num, per_page=request.args.get('per_page', 20), search=request.args.get('search', '')) }}">{{ page_num }}</a>
+                                                </li>
+                                            {% endif %}
+                                        {% else %}
+                                            <li class="page-item disabled">
+                                                <a class="page-link" href="#">...</a>
+                                            </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                    
+                                    {% if pagination.has_next %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="{{ url_for('collector.view_collection', collection_id=collection.id, page=pagination.next_num, per_page=request.args.get('per_page', 20), search=request.args.get('search', '')) }}">بعدی</a>
+                                        </li>
+                                    {% else %}
+                                        <li class="page-item disabled">
+                                            <a class="page-link" href="#" tabindex="-1">بعدی</a>
+                                        </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                        {% endif %}
+                    {% else %}
+                        <div class="alert alert-info">هیچ توییتی در این مجموعه یافت نشد.</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal تأیید حذف -->
+<div class="modal fade" id="deleteCollectionModal" tabindex="-1" role="dialog" aria-labelledby="deleteCollectionModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteCollectionModalLabel">تأیید حذف</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                آیا از حذف مجموعه "{{ collection.name }}" اطمینان دارید؟
+                <p class="text-danger mt-2">این عملیات غیرقابل بازگشت است و تمام توییت‌های مجموعه حذف خواهند شد.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">انصراف</button>
+                <form action="{{ url_for('collector.delete_collection', collection_id=collection.id) }}" method="post">
+                    <button type="submit" class="btn btn-danger">حذف</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<style>
+    .tweet-card {
+        border: 1px solid #e6ecf0;
+        border-radius: 12px;
+        transition: all 0.2s ease;
+    }
+    .tweet-card:hover {
+        border-color: #b3bac5;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .hashtags, .mentions {
+        margin-top: 8px;
+    }
+    .hashtags .badge, .mentions .badge {
+        margin-left: 4px;
+        font-size: 0.85em;
+    }
+    .media-indicator {
+        color: #657786;
+        font-size: 0.85em;
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    $(document).ready(function() {
+        // پیش‌فرض دهی تاریخ شمسی
+        $('.jalali-datepicker').persianDatepicker({
+            format: 'YYYY/MM/DD',
+            autoClose: true
+        });
+    });
+</script>
+{% endblock %}

@@ -6,6 +6,7 @@ from ..models.tweet import Tweet
 from ..models.hashtag import Hashtag
 from ..models.mention import Mention
 from ..models.collection import Collection, CollectionRule
+from ..models.twitter_user import TwitterUser
 
 class CollectorService:
     """سرویس جمع‌آوری توییت‌ها"""
@@ -43,8 +44,10 @@ class CollectorService:
         if existing_tweet:
             current_app.logger.debug(f"Tweet {tweet_id} already exists, updating stats")
             # Update existing tweet stats
-            existing_tweet.likes_count = tweet_data.get('likeCount', 0)
-            existing_tweet.retweets_count = tweet_data.get('retweetCount', 0)
+            existing_tweet.likes_count = tweet_data.get('likeCount', tweet_data.get('like_count', 0))
+            existing_tweet.retweets_count = tweet_data.get('retweetCount', tweet_data.get('retweet_count', 0))
+            existing_tweet.replies_count = tweet_data.get('replyCount', tweet_data.get('reply_count', 0))
+            existing_tweet.quotes_count = tweet_data.get('quoteCount', tweet_data.get('quote_count', 0))
             existing_tweet.collection_id = collection_id
             db.session.commit()
             return existing_tweet, False
@@ -52,71 +55,108 @@ class CollectorService:
         # Extract tweet text
         text = tweet_data.get('text', '')
         
-        # Extract author information
+        # Extract author information - handle different API response structures
         author = tweet_data.get('author', {})
-        username = author.get('userName', '')
+        username = author.get('userName', author.get('username', ''))
         twitter_user_id = None
         
         # Find or create TwitterUser
         if username:
-            from ..models.twitter_user import TwitterUser
-            
             # Get or create TwitterUser record
             twitter_user = TwitterUser.query.filter_by(username=username).first()
             if not twitter_user:
-                # برای twitter_id از id موجود در author یا از username استفاده می‌کنیم
+                # For twitter_id, use the id in author or username
                 author_id = author.get('id', username)
+                display_name = author.get('displayName', author.get('name', ''))
+                profile_image_url = author.get('profileImageUrl', author.get('profilePicture', ''))
+                
                 twitter_user = TwitterUser(
                     twitter_id=str(author_id),
                     username=username,
-                    display_name=author.get('displayName', ''),
-                    profile_image_url=author.get('profileImageUrl', '')
+                    display_name=display_name,
+                    bio=author.get('description', ''),
+                    location=author.get('location', ''),
+                    followers_count=author.get('followers', 0),
+                    following_count=author.get('following', 0),
+                    profile_image_url=profile_image_url,
+                    verified=author.get('isBlueVerified', author.get('verified', False))
                 )
                 db.session.add(twitter_user)
                 db.session.flush()  # Get ID without committing
             
             twitter_user_id = twitter_user.id
         
-        # Parse created_at date
+        # Parse created_at date - handle different date formats
         created_at = None
         created_at_str = tweet_data.get('createdAt')
+        
         if created_at_str:
             try:
+                # Try standard Twitter format first
                 created_at = datetime.strptime(created_at_str, '%a %b %d %H:%M:%S +0000 %Y')
             except (ValueError, TypeError):
-                current_app.logger.warning(f"Could not parse date: {created_at_str}")
-                created_at = datetime.utcnow()
+                try:
+                    # Try ISO format
+                    created_at = datetime.fromisoformat(created_at_str.replace('Z', '+00:00'))
+                except (ValueError, TypeError):
+                    current_app.logger.warning(f"Could not parse date: {created_at_str}")
+                    created_at = datetime.utcnow()
         else:
             created_at = datetime.utcnow()
         
         try:
-            # ایجاد توییت جدید - بدون username
+            # Create new Tweet
             new_tweet = Tweet(
                 twitter_id=str(tweet_id),
                 text=text,
+                full_text=tweet_data.get('full_text', text),
                 twitter_created_at=created_at,
-                likes_count=tweet_data.get('likeCount', 0),
-                retweets_count=tweet_data.get('retweetCount', 0),
-                replies_count=tweet_data.get('replyCount', 0),
-                quotes_count=tweet_data.get('quoteCount', 0),
+                likes_count=tweet_data.get('likeCount', tweet_data.get('like_count', 0)),
+                retweets_count=tweet_data.get('retweetCount', tweet_data.get('retweet_count', 0)),
+                replies_count=tweet_data.get('replyCount', tweet_data.get('reply_count', 0)),
+                quotes_count=tweet_data.get('quoteCount', tweet_data.get('quote_count', 0)),
                 language=tweet_data.get('lang', ''),
                 source=tweet_data.get('source', ''),
-                is_retweet=False,
-                is_quote=False, 
+                is_retweet=tweet_data.get('isRetweet', False),
+                is_quote=tweet_data.get('isQuote', False), 
                 is_reply=tweet_data.get('isReply', False),
+                in_reply_to_tweet_id=tweet_data.get('inReplyToId'),
                 collection_method=method,
                 collection_query=query,
                 collection_id=collection_id,
-                twitter_user_id=twitter_user_id  # استفاده از twitter_user_id به جای username
+                twitter_user_id=twitter_user_id,
+                has_media=bool(tweet_data.get('entities', {}).get('media')),
             )
+            
+            # Process media URLs if present
+            media_entities = tweet_data.get('entities', {}).get('media', [])
+            if media_entities:
+                media_urls = [media.get('media_url_https') for media in media_entities if media.get('media_url_https')]
+                new_tweet.set_media_urls(media_urls)
+            
+            # Process URLs if present
+            url_entities = tweet_data.get('entities', {}).get('urls', [])
+            if url_entities:
+                urls = [url.get('expanded_url') for url in url_entities if url.get('expanded_url')]
+                new_tweet.set_urls(urls)
             
             db.session.add(new_tweet)
             db.session.flush()
             
             current_app.logger.info(f"Created new tweet with ID: {tweet_id}")
             
-            # پردازش هشتگ‌ها و منشن‌ها بدون تغییر
+            # Process hashtags and mentions
             hashtag_texts = self._extract_hashtags(text)
+            hashtag_entities = tweet_data.get('entities', {}).get('hashtags', [])
+            
+            # Add hashtags from entities if available
+            if hashtag_entities:
+                for hashtag_entity in hashtag_entities:
+                    hashtag_text = hashtag_entity.get('text')
+                    if hashtag_text and hashtag_text not in hashtag_texts:
+                        hashtag_texts.append(hashtag_text)
+            
+            # Process all hashtags
             for hashtag_text in hashtag_texts:
                 hashtag = Hashtag.query.filter_by(text=hashtag_text).first()
                 if not hashtag:
@@ -128,7 +168,18 @@ class CollectorService:
                 
                 new_tweet.hashtags.append(hashtag)
             
+            # Process mentions from text and entities
             mention_texts = self._extract_mentions(text)
+            mention_entities = tweet_data.get('entities', {}).get('user_mentions', [])
+            
+            # Add mentions from entities if available
+            if mention_entities:
+                for mention_entity in mention_entities:
+                    mention_text = mention_entity.get('screen_name')
+                    if mention_text and mention_text not in mention_texts:
+                        mention_texts.append(mention_text)
+            
+            # Process all mentions
             for mention_text in mention_texts:
                 mention = Mention.query.filter_by(username=mention_text).first()
                 if not mention:
@@ -180,41 +231,21 @@ class CollectorService:
         db.session.commit()
         
         try:
-            # According to API docs, use the advanced_search endpoint
+            # Using the search_all_tweets method to get tweets with pagination
             current_app.logger.info(f"Searching tweets with keyword: {keyword}")
-            results = self.twitter_api.search_tweets(keyword)
             
-            # Log the overall response structure
-            current_app.logger.debug(f"API response type: {type(results)}")
-            if isinstance(results, dict):
-                current_app.logger.debug(f"API response keys: {list(results.keys())}")
+            # Get tweets using the search_all_tweets method which handles pagination
+            tweets_list = self.twitter_api.search_all_tweets(
+                query=keyword,
+                query_type="Latest",
+                max_tweets=max_tweets
+            )
             
-            # Process results - handling the API structure
-            total_new = 0
-            tweets_data = []
-            
-            # According to the API docs structure
-            if isinstance(results, dict):
-                if 'tweets' in results:
-                    if isinstance(results['tweets'], list):
-                        tweets_data = results['tweets']
-                        current_app.logger.info(f"Found {len(tweets_data)} tweets directly in 'tweets' list")
-                    elif isinstance(results['tweets'], dict) and 'results' in results['tweets']:
-                        tweets_data = results['tweets']['results']
-                        current_app.logger.info(f"Found {len(tweets_data)} tweets in 'tweets.results' list")
-                    else:
-                        current_app.logger.warning(f"Unexpected 'tweets' structure: {type(results['tweets'])}")
-                        
-                        # Try to log detailed structure
-                        if isinstance(results['tweets'], dict):
-                            current_app.logger.debug(f"'tweets' keys: {list(results['tweets'].keys())}")
-                else:
-                    current_app.logger.warning(f"No 'tweets' key in response. Keys: {list(results.keys())}")
-            else:
-                current_app.logger.warning(f"Unexpected response type: {type(results)}")
+            current_app.logger.info(f"Found {len(tweets_list)} tweets matching keyword: {keyword}")
             
             # Process each tweet
-            for tweet_data in tweets_data:
+            total_new = 0
+            for tweet_data in tweets_list:
                 _, is_new = self._process_tweet(tweet_data, collection.id, 'keyword', keyword)
                 if is_new:
                     total_new += 1
@@ -276,45 +307,21 @@ class CollectorService:
         db.session.commit()
         
         try:
-            # According to API docs, use the user/last_tweets endpoint
+            # Using get_all_user_tweets to fetch tweets with pagination
             current_app.logger.info(f"Fetching tweets for user: {username}")
-            results = self.twitter_api.get_user_tweets(username=username)
-            tweets_data = []
-            # بررسی ساختار response
-            if 'tweets' in results:
-                # ساختار استاندارد
-                if isinstance(results['tweets'], list):
-                    tweets_data = results['tweets']
-                elif isinstance(results['tweets'], dict) and 'results' in results['tweets']:
-                    tweets_data = results['tweets']['results']
-            # ساختار جدید با data
-            elif 'data' in results and isinstance(results['data'], list):
-                tweets_data = results['data']
             
-            # Log the structure for debugging
-            current_app.logger.debug(f"API response type: {type(results)}")
-            if isinstance(results, dict):
-                current_app.logger.debug(f"API response keys: {list(results.keys())}")
+            # Fetch all tweets using the get_all_user_tweets method
+            tweets_list = self.twitter_api.get_all_user_tweets(
+                username=username,
+                include_replies=True,
+                max_tweets=max_tweets
+            )
             
-            # Process results - handling the API structure
-            total_new = 0
-            tweets_data = []
-            
-            # According to the API docs structure
-            if isinstance(results, dict):
-                if 'tweets' in results:
-                    if isinstance(results['tweets'], list):
-                        tweets_data = results['tweets']
-                        current_app.logger.info(f"Found {len(tweets_data)} tweets in 'tweets' list")
-                    else:
-                        current_app.logger.warning(f"Unexpected 'tweets' structure: {type(results['tweets'])}")
-                else:
-                    current_app.logger.warning(f"No 'tweets' key in response. Keys: {list(results.keys())}")
-            else:
-                current_app.logger.warning(f"Unexpected response type: {type(results)}")
+            current_app.logger.info(f"Found {len(tweets_list)} tweets for user: {username}")
             
             # Process each tweet
-            for tweet_data in tweets_data:
+            total_new = 0
+            for tweet_data in tweets_list:
                 _, is_new = self._process_tweet(tweet_data, collection.id, 'username', username)
                 if is_new:
                     total_new += 1
@@ -335,6 +342,325 @@ class CollectorService:
         
         except Exception as e:
             current_app.logger.error(f"Error collecting tweets by username: {str(e)}", exc_info=True)
+            collection.status = 'failed'
+            collection.finished_at = datetime.utcnow()
+            db.session.commit()
+            raise
+            
+    def collect_by_hashtag(self, hashtag, max_tweets=100):
+        """جمع‌آوری توییت‌ها براساس هشتگ"""
+        # تبدیل max_tweets به عدد صحیح اگر رشته باشد
+        if isinstance(max_tweets, str):
+            try:
+                max_tweets = int(max_tweets)
+            except ValueError:
+                max_tweets = 100
+        
+        # اطمینان از اینکه max_tweets یک عدد معتبر است
+        max_tweets = max(1, min(1000, max_tweets))
+        
+        # اضافه کردن # به ابتدای هشتگ اگر وجود نداشته باشد
+        if not hashtag.startswith('#'):
+            hashtag_query = f'#{hashtag}'
+        else:
+            hashtag_query = hashtag
+            # حذف # برای نام مجموعه
+            hashtag = hashtag[1:]
+        
+        # ایجاد جمع‌آوری جدید
+        collection = Collection(
+            name=f'هشتگ: {hashtag_query}',
+            description=f'جمع‌آوری توییت‌ها با هشتگ {hashtag_query}',
+            status='running',
+            started_at=datetime.utcnow(),
+            max_tweets=max_tweets
+        )
+        db.session.add(collection)
+        
+        # ایجاد قاعده جمع‌آوری
+        rule = CollectionRule(
+            collection=collection,
+            rule_type='hashtag',
+            value=hashtag
+        )
+        db.session.add(rule)
+        db.session.commit()
+        
+        try:
+            # Using the search_all_tweets method with a hashtag query
+            current_app.logger.info(f"Searching tweets with hashtag: {hashtag_query}")
+            
+            tweets_list = self.twitter_api.search_all_tweets(
+                query=hashtag_query,
+                query_type="Latest",
+                max_tweets=max_tweets
+            )
+            
+            current_app.logger.info(f"Found {len(tweets_list)} tweets with hashtag: {hashtag_query}")
+            
+            # Process each tweet
+            total_new = 0
+            for tweet_data in tweets_list:
+                _, is_new = self._process_tweet(tweet_data, collection.id, 'hashtag', hashtag)
+                if is_new:
+                    total_new += 1
+                    
+                if total_new >= max_tweets:
+                    break
+            
+            # Update collection status
+            collection.status = 'completed'
+            collection.finished_at = datetime.utcnow()
+            collection.total_tweets = total_new
+            db.session.commit()
+            
+            if total_new == 0:
+                current_app.logger.warning(f"Collection completed but no new tweets were found. Hashtag: {hashtag_query}")
+            
+            return collection, total_new
+        
+        except Exception as e:
+            current_app.logger.error(f"Error collecting tweets by hashtag: {str(e)}", exc_info=True)
+            collection.status = 'failed'
+            collection.finished_at = datetime.utcnow()
+            db.session.commit()
+            raise
+            
+    def collect_by_mentions(self, username, max_tweets=100):
+        """جمع‌آوری توییت‌هایی که کاربر خاصی را منشن کرده‌اند"""
+        # تبدیل max_tweets به عدد صحیح اگر رشته باشد
+        if isinstance(max_tweets, str):
+            try:
+                max_tweets = int(max_tweets)
+            except ValueError:
+                max_tweets = 100
+        
+        # اطمینان از اینکه max_tweets یک عدد معتبر است
+        max_tweets = max(1, min(1000, max_tweets))
+        
+        # حذف @ از ابتدای نام کاربری در صورت وجود
+        if username.startswith('@'):
+            username_clean = username[1:]
+        else:
+            username_clean = username
+            username = f'@{username}'
+        
+        # ایجاد جمع‌آوری جدید
+        collection = Collection(
+            name=f'منشن‌های: {username}',
+            description=f'جمع‌آوری توییت‌هایی که کاربر {username} را منشن کرده‌اند',
+            status='running',
+            started_at=datetime.utcnow(),
+            max_tweets=max_tweets
+        )
+        db.session.add(collection)
+        
+        # ایجاد قاعده جمع‌آوری
+        rule = CollectionRule(
+            collection=collection,
+            rule_type='mention',
+            value=username_clean
+        )
+        db.session.add(rule)
+        db.session.commit()
+        
+        try:
+            # Using get_user_mentions to fetch mentions
+            current_app.logger.info(f"Fetching mentions for user: {username}")
+            
+            # Fetch all mentions using the get_all_user_mentions method
+            all_mentions = self.twitter_api.get_all_user_mentions(
+                username=username_clean,
+                max_mentions=max_tweets
+            )
+            
+            current_app.logger.info(f"Found {len(all_mentions)} mentions for user: {username}")
+            
+            # Process each tweet
+            total_new = 0
+            for tweet_data in all_mentions:
+                _, is_new = self._process_tweet(tweet_data, collection.id, 'mention', username_clean)
+                if is_new:
+                    total_new += 1
+                    
+                if total_new >= max_tweets:
+                    break
+            
+            # Update collection status
+            collection.status = 'completed'
+            collection.finished_at = datetime.utcnow()
+            collection.total_tweets = total_new
+            db.session.commit()
+            
+            if total_new == 0:
+                current_app.logger.warning(f"Collection completed but no new tweets were found. Mentions: {username}")
+            
+            return collection, total_new
+        
+        except Exception as e:
+            current_app.logger.error(f"Error collecting tweets by mentions: {str(e)}", exc_info=True)
+            collection.status = 'failed'
+            collection.finished_at = datetime.utcnow()
+            db.session.commit()
+            raise
+    
+    def collect_list_tweets(self, list_id, max_tweets=100):
+        """جمع‌آوری توییت‌های یک لیست"""
+        # تبدیل max_tweets به عدد صحیح اگر رشته باشد
+        if isinstance(max_tweets, str):
+            try:
+                max_tweets = int(max_tweets)
+            except ValueError:
+                max_tweets = 100
+        
+        # اطمینان از اینکه max_tweets یک عدد معتبر است
+        max_tweets = max(1, min(1000, max_tweets))
+        
+        # ایجاد جمع‌آوری جدید
+        collection = Collection(
+            name=f'لیست: {list_id}',
+            description=f'جمع‌آوری توییت‌های لیست با شناسه {list_id}',
+            status='running',
+            started_at=datetime.utcnow(),
+            max_tweets=max_tweets
+        )
+        db.session.add(collection)
+        
+        # ایجاد قاعده جمع‌آوری
+        rule = CollectionRule(
+            collection=collection,
+            rule_type='list',
+            value=list_id
+        )
+        db.session.add(rule)
+        db.session.commit()
+        
+        try:
+            current_app.logger.info(f"Fetching tweets for list ID: {list_id}")
+            
+            # استفاده از یک متغیر برای ذخیره توییت‌ها
+            all_tweets = []
+            cursor = ""
+            
+            # جمع‌آوری توییت‌ها با صفحه‌بندی
+            while len(all_tweets) < max_tweets:
+                result = self.twitter_api.get_list_tweets(list_id=list_id, cursor=cursor)
+                
+                if "tweets" not in result:
+                    break
+                
+                tweets_data = result["tweets"]
+                
+                # بررسی ساختار پاسخ
+                if isinstance(tweets_data, list):
+                    all_tweets.extend(tweets_data)
+                elif isinstance(tweets_data, dict) and "results" in tweets_data:
+                    all_tweets.extend(tweets_data["results"])
+                else:
+                    current_app.logger.warning(f"Unexpected tweets structure: {type(tweets_data)}")
+                    break
+                
+                # بررسی صفحه بعدی
+                if not result.get("has_next_page", False) or "next_cursor" not in result:
+                    break
+                
+                cursor = result["next_cursor"]
+            
+            current_app.logger.info(f"Found {len(all_tweets)} tweets for list ID: {list_id}")
+            
+            # محدود کردن به حداکثر تعداد درخواست شده
+            all_tweets = all_tweets[:max_tweets]
+            
+            # Process each tweet
+            total_new = 0
+            for tweet_data in all_tweets:
+                _, is_new = self._process_tweet(tweet_data, collection.id, 'list', list_id)
+                if is_new:
+                    total_new += 1
+            
+            # Update collection status
+            collection.status = 'completed'
+            collection.finished_at = datetime.utcnow()
+            collection.total_tweets = total_new
+            db.session.commit()
+            
+            if total_new == 0:
+                current_app.logger.warning(f"Collection completed but no new tweets were found. List ID: {list_id}")
+            
+            return collection, total_new
+        
+        except Exception as e:
+            current_app.logger.error(f"Error collecting tweets from list: {str(e)}", exc_info=True)
+            collection.status = 'failed'
+            collection.finished_at = datetime.utcnow()
+            db.session.commit()
+            raise
+            
+    def collect_tweet_replies(self, tweet_id, max_tweets=100):
+        """جمع‌آوری پاسخ‌های یک توییت"""
+        # تبدیل max_tweets به عدد صحیح اگر رشته باشد
+        if isinstance(max_tweets, str):
+            try:
+                max_tweets = int(max_tweets)
+            except ValueError:
+                max_tweets = 100
+        
+        # اطمینان از اینکه max_tweets یک عدد معتبر است
+        max_tweets = max(1, min(1000, max_tweets))
+        
+        # ایجاد جمع‌آوری جدید
+        collection = Collection(
+            name=f'پاسخ‌های توییت: {tweet_id}',
+            description=f'جمع‌آوری پاسخ‌های توییت با شناسه {tweet_id}',
+            status='running',
+            started_at=datetime.utcnow(),
+            max_tweets=max_tweets
+        )
+        db.session.add(collection)
+        
+        # ایجاد قاعده جمع‌آوری
+        rule = CollectionRule(
+            collection=collection,
+            rule_type='tweet_replies',
+            value=tweet_id
+        )
+        db.session.add(rule)
+        db.session.commit()
+        
+        try:
+            # Using get_all_tweet_replies to fetch replies
+            current_app.logger.info(f"Fetching replies for tweet ID: {tweet_id}")
+            
+            replies_list = self.twitter_api.get_all_tweet_replies(
+                tweet_id=tweet_id,
+                max_replies=max_tweets
+            )
+            
+            current_app.logger.info(f"Found {len(replies_list)} replies for tweet ID: {tweet_id}")
+            
+            # Process each tweet
+            total_new = 0
+            for tweet_data in replies_list:
+                _, is_new = self._process_tweet(tweet_data, collection.id, 'tweet_replies', tweet_id)
+                if is_new:
+                    total_new += 1
+                    
+                if total_new >= max_tweets:
+                    break
+            
+            # Update collection status
+            collection.status = 'completed'
+            collection.finished_at = datetime.utcnow()
+            collection.total_tweets = total_new
+            db.session.commit()
+            
+            if total_new == 0:
+                current_app.logger.warning(f"Collection completed but no new tweets were found. Tweet replies: {tweet_id}")
+            
+            return collection, total_new
+        
+        except Exception as e:
+            current_app.logger.error(f"Error collecting tweet replies: {str(e)}", exc_info=True)
             collection.status = 'failed'
             collection.finished_at = datetime.utcnow()
             db.session.commit()
