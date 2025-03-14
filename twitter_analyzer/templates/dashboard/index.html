@@ -1,96 +1,191 @@
 {% extends "base.html" %}
 
-{% block title %}داشبورد{% endblock %}
+{% block title %}داشبورد تحلیل توییتر{% endblock %}
 
 {% block content %}
 <div class="dashboard-container">
     <h1>داشبورد تحلیل توییتر</h1>
     
+    <!-- آمار کلی -->
     <div class="stats-overview">
         <div class="stat-card">
-            <h3>آمار کلی</h3>
-            <div class="text-center">
-                <div class="stat-value">{{ data.total_tweets }}</div>
-                <div class="stat-label">تعداد کل توییت‌ها</div>
-            </div>
+            <h3>کل توییت‌ها</h3>
+            <div class="stat-value">{{ data.total_tweets }}</div>
         </div>
         
         <div class="stat-card">
-            <h3>تحلیل احساسات</h3>
-            <div class="sentiment-bars">
-                {% if data.total_tweets > 0 %}
-                <div class="sentiment-bar positive" style="width: {{ (data.sentiment.positive / data.total_tweets * 100)|round }}%">
-                    <span>مثبت: {{ data.sentiment.positive }}</span>
+            <h3>توییت‌های مثبت</h3>
+            <div class="stat-value">{{ data.sentiment.positive }}</div>
+            <div class="stat-percentage">{{ (data.sentiment.positive / data.total_tweets * 100) | round(1) }}%</div>
+        </div>
+        
+        <div class="stat-card">
+            <h3>توییت‌های خنثی</h3>
+            <div class="stat-value">{{ data.sentiment.neutral }}</div>
+            <div class="stat-percentage">{{ (data.sentiment.neutral / data.total_tweets * 100) | round(1) }}%</div>
+        </div>
+        
+        <div class="stat-card">
+            <h3>توییت‌های منفی</h3>
+            <div class="stat-value">{{ data.sentiment.negative }}</div>
+            <div class="stat-percentage">{{ (data.sentiment.negative / data.total_tweets * 100) | round(1) }}%</div>
+        </div>
+    </div>
+    
+    <!-- بخش هوش مصنوعی -->
+    <div class="ai-section chart-row">
+        <!-- باکس تحلیل هوش مصنوعی -->
+        <div class="ai-analysis-box">
+            <div class="ai-header">
+                <h3><i class="ai-icon"></i> تحلیل هوشمند روندها</h3>
+                <div class="refresh-btn" id="refreshAiAnalysis" title="به‌روزرسانی تحلیل">
+                    <i class="refresh-icon"></i>
                 </div>
-                <div class="sentiment-bar neutral" style="width: {{ (data.sentiment.neutral / data.total_tweets * 100)|round }}%">
-                    <span>خنثی: {{ data.sentiment.neutral }}</span>
+            </div>
+            <div class="ai-content" id="aiAnalysisContent">
+                <div class="ai-loading-placeholder" id="aiAnalysisLoading">
+                    <div class="loading-animation"></div>
+                    <p>در حال دریافت تحلیل هوشمند...</p>
                 </div>
-                <div class="sentiment-bar negative" style="width: {{ (data.sentiment.negative / data.total_tweets * 100)|round }}%">
-                    <span>منفی: {{ data.sentiment.negative }}</span>
+                <div class="ai-result" id="aiAnalysisResult" style="display: none;">
+                    <!-- محتوای تحلیل هوش مصنوعی اینجا قرار می‌گیرد -->
                 </div>
-                {% else %}
-                <p>داده‌ای برای نمایش وجود ندارد.</p>
-                {% endif %}
+            </div>
+            <div class="ai-footer">
+                <span class="ai-timestamp">آخرین به‌روزرسانی: <span id="aiAnalysisTimestamp">-</span></span>
+            </div>
+        </div>
+        
+        <!-- باکس چت با هوش مصنوعی -->
+        <div class="ai-chat-box">
+            <div class="ai-header">
+                <h3><i class="ai-chat-icon"></i> گفتگو با هوشیار</h3>
+                <div class="clear-btn" id="clearAiChat" title="پاک کردن گفتگو">
+                    <i class="clear-icon"></i>
+                </div>
+            </div>
+            <div class="ai-chat-content">
+                <div class="chat-messages" id="aiChatMessages">
+                    <div class="ai-message">
+                        <div class="ai-avatar"></div>
+                        <div class="message-content">
+                            سلام! من هوشیار هستم. درباره روندهای توییتر از من بپرسید.
+                        </div>
+                    </div>
+                    <!-- پیام‌های دیگر اینجا اضافه می‌شوند -->
+                </div>
+            </div>
+            <div class="ai-chat-input">
+                <form id="aiChatForm">
+                    <input type="text" id="aiChatPrompt" placeholder="سوال خود را بپرسید..." autocomplete="off">
+                    <button type="submit" id="aiChatSubmit">
+                        <i class="send-icon"></i>
+                    </button>
+                </form>
             </div>
         </div>
     </div>
-    <div class="row">
-        <div class="admin-section">
-            <h2>عملیات مدیریتی</h2>
-            <div class="admin-actions">
-                <a href="{{ url_for('collector.index') }}" class="btn">جمع‌آوری توییت‌ها</a>
-                <a href="{{ url_for('manage_tweets.index') }}" class="btn">مدیریت توییت‌ها</a>
-                <a href="{{ url_for('manage_users.index') }}" class="btn">مدیریت کاربران</a>
-                <a href="{{ url_for('settings.index') }}" class="btn">تنظیمات سیستم</a>
-            </div>
-        </div>
-    </div>
-    <div class="row">
+    
+    <!-- نمودار دایره‌ای احساسات -->
+    <div class="chart-row">
         <div class="chart-container">
-            <canvas id="sentimentChart"></canvas>
+            <h2>توزیع احساسات</h2>
+            <canvas id="sentimentPieChart"></canvas>
+        </div>
+        
+        <!-- نمودار فعالیت روزانه -->
+        <div class="chart-container">
+            <h2>فعالیت روزانه</h2>
+            <canvas id="dailyActivityChart"></canvas>
         </div>
     </div>
     
-    <div class="hashtags-section">
-        <h2>هشتگ‌های پرتکرار</h2>
+    <!-- نمودار هشتگ‌های محبوب -->
+    <div class="chart-row">
+        <div class="chart-container">
+            <h2>هشتگ‌های محبوب</h2>
+            <canvas id="topHashtagsChart"></canvas>
+        </div>
+        
+        <!-- نمودار روند احساسات -->
+        <div class="chart-container">
+            <h2>روند احساسات در طول زمان</h2>
+            <canvas id="sentimentTrendChart"></canvas>
+        </div>
+    </div>
+    
+    <!-- نمودار رادار موضوعات -->
+    <div class="chart-row">
+        <div class="chart-container">
+            <h2>مقایسه احساسات در موضوعات مختلف</h2>
+            <canvas id="topicsRadarChart"></canvas>
+        </div>
+        
+        <!-- نمودار حبابی تعامل‌ها -->
+        <div class="chart-container">
+            <h2>تعامل کاربران</h2>
+            <canvas id="engagementBubbleChart"></canvas>
+        </div>
+    </div>
+    
+    <!-- بخش هشتگ‌های داغ -->
+    <div class="trending-section">
+        <h2>هشتگ‌های داغ</h2>
         <div class="hashtag-list">
-            {% if data.top_hashtags %}
-                {% for hashtag in data.top_hashtags %}
-                    <span class="hashtag">{{ hashtag }}</span>
-                {% endfor %}
-            {% else %}
-                <p>هیچ هشتگی یافت نشد.</p>
-            {% endif %}
+            {% for hashtag in data.top_hashtags %}
+            <div class="hashtag">{{ hashtag }}</div>
+            {% endfor %}
         </div>
-    </div>
-    
-    <div class="cta-section" style="margin-top: 2rem; text-align: center;">
-        <a href="{{ url_for('dashboard.analysis') }}" class="btn">مشاهده تحلیل دقیق‌تر</a>
     </div>
 </div>
 {% endblock %}
 
-{% block extra_js %}
-<script>
-    // تعریف داده‌ها در یک آبجکت جاوااسکریپت
-    const dashboardData = {
-        totalTweets: {{ data.total_tweets|tojson }},
-        sentiment: {
-            positive: {{ data.sentiment.positive|tojson }},
-            neutral: {{ data.sentiment.neutral|tojson }},
-            negative: {{ data.sentiment.negative|tojson }}
-        }
-    };
+{% block extra_css %}
+<style>
+    .chart-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        margin: 2rem 0;
+    }
     
-    document.addEventListener('DOMContentLoaded', function() {
-        if (dashboardData.totalTweets > 0) {
-            renderSentimentChart('sentimentChart', dashboardData.sentiment);
-        } else {
-            const ctx = document.getElementById('sentimentChart');
-            if (ctx) {
-                ctx.parentNode.innerHTML = '<div class="empty-data-message">داده‌ای برای نمایش نمودار وجود ندارد</div>';
-            }
+    .chart-container {
+        background-color: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    }
+    
+    .stat-percentage {
+        font-size: 1rem;
+        color: #6c757d;
+        margin-top: 0.5rem;
+    }
+    
+    .trending-section {
+        margin-top: 2rem;
+        background-color: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    }
+    
+    @media (max-width: 768px) {
+        .chart-row {
+            grid-template-columns: 1fr;
         }
-    });
-</script>
+    }
+    
+    /* استایل‌های اضافی برای بخش هوش مصنوعی */
+    .ai-section {
+        margin-top: 2rem;
+    }
+</style>
+<!-- اضافه کردن استایل‌های کامپوننت‌های هوش مصنوعی -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/ai-components.css') }}">
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/dashboard-charts.js') }}"></script>
+<script src="{{ url_for('static', filename='js/ai-dashboard.js') }}"></script>
 {% endblock %}

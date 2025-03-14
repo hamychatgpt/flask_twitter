@@ -4,23 +4,266 @@
 
 {% block content %}
 <div class="analysis-container">
-    <h1>تحلیل دقیق توییت‌ها</h1>
+    <h1>تحلیل توییت‌ها</h1>
     
+    <!-- بخش جستجو -->
     <div class="search-section">
-        <h2>جستجوی توییت</h2>
-        <form id="search-form" class="search-form">
-            <input type="text" id="search-query" placeholder="کلمه کلیدی یا هشتگ را وارد کنید">
+        <h2>جستجوی توییت برای تحلیل</h2>
+        <form class="search-form" action="{{ url_for('dashboard.analysis') }}" method="get">
+            <input type="text" name="q" placeholder="کلمه کلیدی، هشتگ یا نام کاربری را وارد کنید" value="{{ request.args.get('q', '') }}">
             <button type="submit" class="btn">جستجو</button>
         </form>
     </div>
     
-    <div id="results-container" class="results-container">
-        <p>برای تحلیل توییت‌ها، یک عبارت جستجو وارد کنید</p>
+    {% if request.args.get('q') %}
+    <!-- نتایج تحلیل -->
+    <div class="analysis-results">
+        <h2>نتایج تحلیل برای "{{ request.args.get('q') }}"</h2>
+        
+        <!-- نمودار احساسات -->
+        <div class="chart-row">
+            <div class="chart-container">
+                <h3>توزیع احساسات</h3>
+                <canvas id="querySentimentChart"></canvas>
+            </div>
+            
+            <!-- نمودار روند زمانی -->
+            <div class="chart-container">
+                <h3>روند زمانی توییت‌ها</h3>
+                <canvas id="queryTimelineChart"></canvas>
+            </div>
+        </div>
+        
+        <!-- نمودار کلمات کلیدی -->
+        <div class="chart-row">
+            <div class="chart-container">
+                <h3>کلمات کلیدی پرتکرار</h3>
+                <canvas id="keywordsChart"></canvas>
+            </div>
+            
+            <!-- نمودار تعاملات -->
+            <div class="chart-container">
+                <h3>میزان تعامل کاربران</h3>
+                <canvas id="engagementChart"></canvas>
+            </div>
+        </div>
+        
+        <!-- نمودار ابر کلمات -->
+        <div class="chart-container">
+            <h3>ابر کلمات</h3>
+            <div id="wordCloudContainer" style="height: 400px;"></div>
+        </div>
+        
+        <!-- جدول توییت‌های مهم -->
+        <div class="important-tweets">
+            <h3>توییت‌های تأثیرگذار</h3>
+            <div class="tweet-list">
+                {% for i in range(5) %}
+                <div class="tweet-card">
+                    <div class="tweet-user">@کاربر_نمونه{{ i + 1 }}</div>
+                    <div class="tweet-content">این یک توییت نمونه است که برای نمایش در بخش توییت‌های تأثیرگذار استفاده می‌شود.</div>
+                    <div class="tweet-stats">
+                        <span><i class="icon-like"></i> {{ range(50, 500) | random }}</span>
+                        <span><i class="icon-retweet"></i> {{ range(10, 100) | random }}</span>
+                        <span><i class="icon-reply"></i> {{ range(5, 50) | random }}</span>
+                    </div>
+                    <div class="tweet-date">{{ range(1, 30) | random }} روز پیش</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
     </div>
-    
-    <div class="chart-container">
-        <h2>نمودار توزیع زمانی</h2>
-        <canvas id="timeChart"></canvas>
+    {% else %}
+    <div class="analysis-placeholder">
+        <p>برای شروع تحلیل، لطفاً یک عبارت جستجو وارد کنید.</p>
     </div>
+    {% endif %}
 </div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chart-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        margin: 2rem 0;
+    }
+    
+    .chart-container {
+        background-color: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        margin-bottom: 2rem;
+    }
+    
+    .important-tweets {
+        background-color: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    }
+    
+    .tweet-stats {
+        display: flex;
+        gap: 1rem;
+        margin-top: 0.5rem;
+        color: #6c757d;
+    }
+    
+    .analysis-placeholder {
+        text-align: center;
+        padding: 3rem;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        margin-top: 2rem;
+    }
+    
+    @media (max-width: 768px) {
+        .chart-row {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/wordcloud-script.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // فقط اگر جستجو انجام شده باشد، نمودارها را نمایش بده
+    if ("{{ request.args.get('q') }}") {
+        // توزیع احساسات
+        const sentimentCtx = document.getElementById('querySentimentChart').getContext('2d');
+        new Chart(sentimentCtx, {
+            type: 'pie',
+            data: {
+                labels: ['مثبت', 'خنثی', 'منفی'],
+                datasets: [{
+                    label: 'توزیع احساسات',
+                    data: [{{ range(10, 50) | random }}, {{ range(30, 70) | random }}, {{ range(5, 30) | random }}],
+                    backgroundColor: [
+                        '#28a745',  // سبز برای مثبت
+                        '#6c757d',  // خاکستری برای خنثی
+                        '#dc3545'   // قرمز برای منفی
+                    ],
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+        
+        // روند زمانی
+        const timelineCtx = document.getElementById('queryTimelineChart').getContext('2d');
+        new Chart(timelineCtx, {
+            type: 'line',
+            data: {
+                labels: ['۱۰ روز پیش', '۹ روز پیش', '۸ روز پیش', '۷ روز پیش', '۶ روز پیش', '۵ روز پیش', '۴ روز پیش', '۳ روز پیش', '۲ روز پیش', '۱ روز پیش', 'امروز'],
+                datasets: [{
+                    label: 'تعداد توییت‌ها',
+                    data: [
+                        {{ range(5, 20) | random }}, 
+                        {{ range(5, 20) | random }}, 
+                        {{ range(5, 20) | random }}, 
+                        {{ range(5, 20) | random }}, 
+                        {{ range(5, 20) | random }}, 
+                        {{ range(5, 20) | random }}, 
+                        {{ range(5, 20) | random }}, 
+                        {{ range(5, 20) | random }}, 
+                        {{ range(5, 20) | random }}, 
+                        {{ range(5, 20) | random }}, 
+                        {{ range(5, 20) | random }}
+                    ],
+                    fill: false,
+                    borderColor: '#1da1f2',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        
+        // کلمات کلیدی
+        const keywordsCtx = document.getElementById('keywordsChart').getContext('2d');
+        new Chart(keywordsCtx, {
+            type: 'bar',
+            data: {
+                labels: ['کلمه۱', 'کلمه۲', 'کلمه۳', 'کلمه۴', 'کلمه۵', 'کلمه۶', 'کلمه۷', 'کلمه۸'],
+                datasets: [{
+                    label: 'تعداد تکرار',
+                    data: [
+                        {{ range(10, 50) | random }}, 
+                        {{ range(10, 50) | random }}, 
+                        {{ range(10, 50) | random }}, 
+                        {{ range(10, 50) | random }}, 
+                        {{ range(10, 50) | random }}, 
+                        {{ range(10, 50) | random }}, 
+                        {{ range(10, 50) | random }}, 
+                        {{ range(10, 50) | random }}
+                    ],
+                    backgroundColor: '#17a2b8'
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                scales: {
+                    x: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        
+        // تعاملات
+        const engagementCtx = document.getElementById('engagementChart').getContext('2d');
+        new Chart(engagementCtx, {
+            type: 'radar',
+            data: {
+                labels: ['لایک', 'ریتوییت', 'پاسخ', 'نقل قول', 'اشتراک‌گذاری', 'ذخیره'],
+                datasets: [{
+                    label: 'میانگین تعامل',
+                    data: [
+                        {{ range(50, 200) | random }}, 
+                        {{ range(20, 100) | random }}, 
+                        {{ range(10, 50) | random }}, 
+                        {{ range(5, 30) | random }}, 
+                        {{ range(10, 40) | random }}, 
+                        {{ range(5, 20) | random }}
+                    ],
+                    fill: true,
+                    backgroundColor: 'rgba(29, 161, 242, 0.2)',
+                    borderColor: '#1da1f2',
+                    pointBackgroundColor: '#1da1f2',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: '#1da1f2'
+                }]
+            },
+            options: {
+                elements: {
+                    line: {
+                        borderWidth: 3
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
 {% endblock %}

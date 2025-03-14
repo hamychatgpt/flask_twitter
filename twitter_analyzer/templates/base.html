@@ -3,16 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}تحلیلگر توییتر{% endblock %}</title>
-    <!-- نیازمندی‌های اصلی -->
+    <title>{% block title %}هـــوشــیار{% endblock %}</title>
+    
+    <!-- نیازمندی‌های اصلی CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
 
+    <!-- کتابخانه‌های JavaScript -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-cloud@1.2.5/build/d3.layout.cloud.min.js"></script>
 
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <header class="ltr">
-        <nav>
+    <header>
+        <nav class="ltr">
             <div class="logo">هـوشیـار</div>
             <ul>
                 <li><a href="{{ url_for('dashboard.index') }}">داشبورد</a></li>
@@ -46,17 +53,12 @@
     </main>
     
     <footer>
-        <p>&copy; {{ current_year|default(1402) }} تحلیلگر توییتر - تمامی حقوق محفوظ است</p>
+        <p>&copy; {{ current_year|default(1402) }} هــوشــیار - تمامی حقوق محفوظ است</p>
     </footer>
     
-   <!-- نیازمندی‌های اصلی -->
-   <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
-
-   <!-- اضافه کردن jQuery به صورت مستقیم -->
-   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-       <!-- کتابخانه‌های اختیاری برای نمودارها -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
+    <!-- فایل JavaScript اصلی -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    
     {% block extra_js %}{% endblock %}
 </body>
 </html>
