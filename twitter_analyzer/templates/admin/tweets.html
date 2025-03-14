@@ -16,35 +16,47 @@
         {% endif %}
     {% endwith %}
     
-    <!-- فیلترهای جستجو -->
-    <div class="admin-section search-filters">
-        <h2>جستجو و فیلتر</h2>
-        <form method="GET" action="{{ url_for('admin.tweets') }}" class="filter-form">
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="keyword">کلیدواژه:</label>
-                    <input type="text" id="keyword" name="keyword" class="form-control" value="{{ request.args.get('keyword', '') }}">
-                </div>
-                <div class="form-group">
-                    <label for="username">نام کاربری:</label>
-                    <input type="text" id="username" name="username" class="form-control" value="{{ request.args.get('username', '') }}">
-                </div>
-                <div class="form-group">
-                    <label for="date_from">از تاریخ:</label>
-                    <input type="date" id="date_from" name="date_from" class="form-control" value="{{ request.args.get('date_from', '') }}">
-                </div>
-                <div class="form-group">
-                    <label for="date_to">تا تاریخ:</label>
-                    <input type="date" id="date_to" name="date_to" class="form-control" value="{{ request.args.get('date_to', '') }}">
-                </div>
-                <div class="form-group button-group">
-                    <button type="submit" class="btn">جستجو</button>
-                    <a href="{{ url_for('admin.tweets') }}" class="btn btn-secondary">پاک کردن فیلترها</a>
-                </div>
+<!-- فیلترهای جستجو -->
+<div class="admin-section search-filters">
+    <h2>جستجو و فیلتر</h2>
+    <form method="GET" action="{{ url_for('manage_tweets.index') }}" class="filter-form">
+        <div class="form-row">
+            <div class="form-group">
+                <label for="keyword">کلیدواژه:</label>
+                <input type="text" id="keyword" name="keyword" class="form-control" value="{{ keyword or '' }}">
             </div>
-        </form>
+            <div class="form-group">
+                <label for="username">نام کاربری:</label>
+                <input type="text" id="username" name="username" class="form-control" value="{{ username or '' }}">
+            </div>
+            <div class="form-group">
+                <label for="date_from">از تاریخ:</label>
+                <input type="date" id="date_from" name="date_from" class="form-control" value="{{ date_from or '' }}">
+            </div>
+            <div class="form-group">
+                <label for="date_to">تا تاریخ:</label>
+                <input type="date" id="date_to" name="date_to" class="form-control" value="{{ date_to or '' }}">
+            </div>
+            <div class="form-group button-group">
+                <button type="submit" class="btn">جستجو</button>
+                <a href="{{ url_for('manage_tweets.index') }}" class="btn btn-secondary">پاک کردن فیلترها</a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- نتایج جستجو و وضعیت -->
+<div id="search-results" class="search-results" {% if tweets|length == 0 and filter_applied %}style="display:block;"{% elif tweets|length == 0 %}style="display:none;"{% else %}style="display:block;"{% endif %}>
+    <div class="alert {% if tweets|length > 0 %}alert-info{% else %}alert-warning{% endif %}">
+        {% if tweets|length > 0 %}
+            <span id="result-count">{{ tweets|length }}</span> توییت یافت شد.
+        {% else %}
+            <span>هیچ توییتی با معیارهای جستجوی فعلی یافت نشد.</span>
+        {% endif %}
     </div>
+</div>
     
+
     <!-- جدول توییت‌ها -->
     <div class="admin-section">
         <h2>لیست توییت‌ها</h2>
@@ -66,7 +78,7 @@
                                 <td>{{ tweet.id }}</td>
                                 <td class="tweet-text">{{ tweet.text }}</td>
                                 <td>{{ tweet.username }}</td>
-                                <td>{{ tweet.created }}</td>
+                                <td>{{ tweet.created.strftime('%Y-%m-%d %H:%M') if tweet.created else '' }}</td>
                                 <td class="tweet-actions">
                                     <button class="btn-icon view-tweet" data-tweet-id="{{ tweet.id }}" title="مشاهده">
                                         <span class="icon">👁️</span>
@@ -87,33 +99,41 @@
         </div>
     </div>
     
-    <!-- صفحه‌بندی -->
-    {% if total_pages > 1 %}
-        <div class="pagination">
-            {% if page > 1 %}
-                <a href="{{ url_for('admin.tweets', page=page-1, **request.args) }}" class="pagination-item">قبلی</a>
-            {% endif %}
-            
-            {% for p in range(1, total_pages + 1) %}
-                {% if p == page %}
-                    <span class="pagination-item active">{{ p }}</span>
-                {% elif p == 1 or p == total_pages or (p >= page - 2 and p <= page + 2) %}
-                    <a href="{{ url_for('admin.tweets', page=p, **request.args) }}" class="pagination-item">{{ p }}</a>
-                {% elif p == page - 3 or p == page + 3 %}
-                    <span class="pagination-item dots">...</span>
-                {% endif %}
-            {% endfor %}
-            
-            {% if page < total_pages %}
-                <a href="{{ url_for('admin.tweets', page=page+1, **request.args) }}" class="pagination-item">بعدی</a>
-            {% endif %}
-        </div>
+<!-- صفحه‌بندی -->
+{% if total_pages > 1 %}
+<div class="pagination">
+    {% if page > 1 %}
+        <a href="{{ url_for('manage_tweets.index', page=page-1, 
+            keyword=keyword if keyword else None, 
+            username=username if username else None, 
+            date_from=date_from if date_from else None, 
+            date_to=date_to if date_to else None) }}" class="pagination-item">قبلی</a>
     {% endif %}
     
-    <div class="navigation-buttons">
-        <a href="{{ url_for('admin.index') }}" class="btn btn-secondary">بازگشت به پنل مدیریت</a>
-    </div>
+    {% for p in range(1, total_pages + 1) %}
+        {% if p == page %}
+            <span class="pagination-item active">{{ p }}</span>
+        {% elif p == 1 or p == total_pages or (p >= page - 2 and p <= page + 2) %}
+            <a href="{{ url_for('manage_tweets.index', page=p, 
+                keyword=keyword if keyword else None, 
+                username=username if username else None, 
+                date_from=date_from if date_from else None, 
+                date_to=date_to if date_to else None) }}" class="pagination-item">{{ p }}</a>
+        {% elif p == page - 3 or p == page + 3 %}
+            <span class="pagination-item dots">...</span>
+        {% endif %}
+    {% endfor %}
     
+    {% if page < total_pages %}
+        <a href="{{ url_for('manage_tweets.index', page=page+1, 
+            keyword=keyword if keyword else None, 
+            username=username if username else None, 
+            date_from=date_from if date_from else None, 
+            date_to=date_to if date_to else None) }}" class="pagination-item">بعدی</a>
+    {% endif %}
+</div>
+{% endif %}
+
     <!-- مودال مشاهده توییت -->
     <div id="tweet-modal" class="modal">
         <div class="modal-content">
@@ -130,53 +150,109 @@
 {% endblock %}
 
 {% block extra_js %}
+<!-- مطمئن شویم jQuery لود شده است -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-    // اسکریپت برای نمایش مودال
-    document.addEventListener('DOMContentLoaded', function() {
-        const modal = document.getElementById('tweet-modal');
-        const modalContent = document.getElementById('tweet-modal-content');
-        const closeBtn = document.querySelector('.close');
+    $(document).ready(function() {
+        console.log("Tweets management script loaded");
+        
+        // تعیین تعداد نتایج جستجو
+        var tweetsCount = {{ tweets|length }};
+        if (tweetsCount > 0) {
+            $('#result-count').text(tweetsCount);
+            $('#search-results').show();
+        }
         
         // دکمه‌های مشاهده توییت
-        const viewButtons = document.querySelectorAll('.view-tweet');
-        viewButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                const tweetId = this.getAttribute('data-tweet-id');
-                const tweetText = this.closest('tr').querySelector('.tweet-text').textContent;
-                
-                // نمایش محتوای توییت در مودال
-                modalContent.innerHTML = `
-                    <p><strong>شناسه:</strong> ${tweetId}</p>
-                    <p><strong>متن توییت:</strong></p>
-                    <p>${tweetText}</p>
-                `;
-                
-                // نمایش مودال
-                modal.style.display = 'block';
-            });
-        });
-        
-        // دکمه‌های حذف توییت - اضافه کردن تأییدیه
-        const deleteButtons = document.querySelectorAll('.delete-tweet');
-        deleteButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                const tweetId = this.getAttribute('data-tweet-id');
-                if (confirm('آیا از حذف این توییت اطمینان دارید؟')) {
-                    // در اینجا می‌توانید یک درخواست AJAX برای حذف توییت ارسال کنید
-                    alert('این قابلیت هنوز پیاده‌سازی نشده است.');
+        $('.view-tweet').on('click', function() {
+            const tweetId = $(this).data('tweet-id');
+            
+            // نمایش وضعیت بارگیری
+            $('#tweet-modal-content').html('<div class="loading">در حال بارگذاری...</div>');
+            $('#tweet-modal').css('display', 'block');
+            
+            // ارسال درخواست AJAX برای دریافت جزئیات توییت
+            $.ajax({
+                url: "{{ url_for('manage_tweets.view_tweet', tweet_id=0) }}".replace('0', tweetId),
+                type: 'GET',
+                success: function(response) {
+                    console.log("Tweet data:", response);
+                    
+                    // ساخت HTML برای نمایش جزئیات توییت
+                    var html = `
+                        <div class="tweet-detail">
+                            <p><strong>شناسه:</strong> ${response.id}</p>
+                            <p><strong>شناسه توییتر:</strong> ${response.twitter_id}</p>
+                            <p><strong>کاربر:</strong> @${response.username}</p>
+                            <p><strong>تاریخ:</strong> ${response.created_at}</p>
+                            <p><strong>زبان:</strong> ${response.language || 'نامشخص'}</p>
+                            <p><strong>تعداد لایک:</strong> ${response.likes_count}</p>
+                            <p><strong>تعداد ریتوییت:</strong> ${response.retweets_count}</p>
+                            <p><strong>تعداد پاسخ:</strong> ${response.replies_count}</p>
+                            <hr>
+                            <p><strong>متن توییت:</strong></p>
+                            <p class="tweet-full-text">${response.text}</p>
+                        </div>
+                    `;
+                    
+                    $('#tweet-modal-content').html(html);
+                },
+                error: function(xhr, status, error) {
+                    console.error("Error:", xhr, status, error);
+                    $('#tweet-modal-content').html('<div class="error">خطا در بارگذاری اطلاعات توییت</div>');
                 }
             });
         });
         
+        // دکمه‌های حذف توییت
+        $('.delete-tweet').on('click', function() {
+            const tweetId = $(this).data('tweet-id');
+            const tweetRow = $(this).closest('tr');
+            
+            if (confirm('آیا از حذف این توییت اطمینان دارید؟')) {
+                $.ajax({
+                    url: "{{ url_for('manage_tweets.delete_tweet', tweet_id=0) }}".replace('0', tweetId),
+                    type: 'POST',
+                    contentType: 'application/json',
+                    success: function(response) {
+                        console.log("Delete response:", response);
+                        
+                        if (response.status === 'success') {
+                            // حذف سطر از جدول
+                            tweetRow.remove();
+                            
+                            // نمایش پیام موفقیت
+                            alert(response.message);
+                            
+                            // کاهش شمارنده نتایج
+                            tweetsCount--;
+                            $('#result-count').text(tweetsCount);
+                            
+                            // اگر همه نتایج حذف شدند
+                            if (tweetsCount === 0) {
+                                location.reload();
+                            }
+                        } else {
+                            alert(response.message || 'خطا در حذف توییت');
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error("Error:", xhr, status, error);
+                        alert('خطا در حذف توییت');
+                    }
+                });
+            }
+        });
+        
         // بستن مودال
-        closeBtn.addEventListener('click', function() {
-            modal.style.display = 'none';
+        $('.close').on('click', function() {
+            $('#tweet-modal').css('display', 'none');
         });
         
         // بستن مودال با کلیک خارج از آن
-        window.addEventListener('click', function(event) {
-            if (event.target == modal) {
-                modal.style.display = 'none';
+        $(window).on('click', function(event) {
+            if ($(event.target).is('#tweet-modal')) {
+                $('#tweet-modal').css('display', 'none');
             }
         });
     });

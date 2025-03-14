@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}مدیریت کاربران{% endblock %}
+
+{% block content %}
+<div class="admin-users-container">
+    <h1>مدیریت کاربران</h1>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-container">
+                {% for category, message in messages %}
+                    <div class="flash {{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+    
+    <!-- جدول کاربران -->
+    <div class="admin-section">
+        <h2>لیست کاربران</h2>
+        <div class="table-responsive">
+            <table class="users-table">
+                <thead>
+                    <tr>
+                        <th>شناسه</th>
+                        <th>نام کاربری</th>
+                        <th>ایمیل</th>
+                        <th>تاریخ عضویت</th>
+                        <th>نقش</th>
+                        <th>عملیات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if users %}
+                        {% for user in users %}
+                            <tr>
+                                <td>{{ user.id }}</td>
+                                <td>{{ user.username }}</td>
+                                <td>{{ user.email }}</td>
+                                <td>{{ user.created_at.strftime('%Y/%m/%d %H:%M') if user.created_at else '' }}</td>
+                                <td>{% if user.is_admin %}مدیر{% else %}کاربر عادی{% endif %}</td>
+                                <td class="user-actions">
+                                    <button class="btn-icon view-user" data-user-id="{{ user.id }}" title="مشاهده">
+                                        <span class="icon">👁️</span>
+                                    </button>
+                                    <button class="btn-icon edit-user" data-user-id="{{ user.id }}" title="ویرایش">
+                                        <span class="icon">✏️</span>
+                                    </button>
+                                    <button class="btn-icon delete-user" data-user-id="{{ user.id }}" title="حذف">
+                                        <span class="icon">🗑️</span>
+                                    </button>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center">هیچ کاربری یافت نشد.</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <div class="navigation-buttons">
+        <a href="{{ url_for('admin.index') }}" class="btn btn-secondary">بازگشت به پنل مدیریت</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // اسکریپت برای مدیریت کاربران - اضافه خواهد شد
+    document.addEventListener('DOMContentLoaded', function() {
+        // اسکریپت‌های مربوط به مشاهده، ویرایش و حذف کاربران
+        
+        // دکمه‌های حذف کاربر
+        const deleteButtons = document.querySelectorAll('.delete-user');
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const userId = this.getAttribute('data-user-id');
+                if (confirm('آیا از حذف این کاربر اطمینان دارید؟')) {
+                    // در اینجا می‌توانید یک درخواست AJAX برای حذف کاربر ارسال کنید
+                    alert('این قابلیت هنوز پیاده‌سازی نشده است.');
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

@@ -1,4 +1,3 @@
-<!-- twitter_analyzer/templates/collector/index.html -->
 {% extends "base.html" %}
 
 {% block title %}جمع‌آوری توییت‌ها{% endblock %}
@@ -7,12 +6,22 @@
 <div class="collector-container">
     <h1>جمع‌آوری توییت‌ها</h1>
     
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-container">
+                {% for category, message in messages %}
+                    <div class="flash {{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+    
     <div class="row">
         <div class="col-md-6">
             <div class="panel panel-primary">
                 <div class="panel-heading">جمع‌آوری براساس کلمه کلیدی</div>
                 <div class="panel-body">
-                    <form id="keyword-form">
+                    <form id="keyword-form" method="POST" action="{{ url_for('collector.collect_keyword') }}">
                         <div class="form-group">
                             <label for="keyword">کلمه کلیدی:</label>
                             <input type="text" class="form-control" id="keyword" name="keyword" required>
@@ -31,7 +40,7 @@
             <div class="panel panel-info">
                 <div class="panel-heading">جمع‌آوری براساس نام کاربری</div>
                 <div class="panel-body">
-                    <form id="username-form">
+                    <form id="username-form" method="POST" action="{{ url_for('collector.collect_username') }}">
                         <div class="form-group">
                             <label for="username">نام کاربری:</label>
                             <div class="input-group">
@@ -56,14 +65,57 @@
             <div id="result-message"></div>
         </div>
     </div>
+    
+    {% if collections %}
+    <div class="panel panel-default">
+        <div class="panel-heading">جمع‌آوری‌های اخیر</div>
+        <div class="panel-body">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>نام</th>
+                        <th>تاریخ شروع</th>
+                        <th>تعداد توییت‌ها</th>
+                        <th>وضعیت</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for collection in collections %}
+                    <tr>
+                        <td>{{ collection.name }}</td>
+                        <td>{{ collection.started_at.strftime('%Y/%m/%d %H:%M') if collection.started_at else '' }}</td>
+                        <td>{{ collection.total_tweets }}</td>
+                        <td>
+                            {% if collection.status == 'completed' %}
+                                <span class="label label-success">تکمیل شده</span>
+                            {% elif collection.status == 'running' %}
+                                <span class="label label-warning">در حال اجرا</span>
+                            {% elif collection.status == 'failed' %}
+                                <span class="label label-danger">خطا</span>
+                            {% else %}
+                                <span class="label label-default">{{ collection.status }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}
 
 {% block extra_js %}
+<!-- مطمئن شویم jQuery لود شده است -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     $(document).ready(function() {
+        console.log("jQuery loaded and script running"); // برای اشکال‌زدایی
+        
         // فرم جمع‌آوری کلمه کلیدی
         $('#keyword-form').submit(function(e) {
+            console.log("Keyword form submitted"); // برای اشکال‌زدایی
             e.preventDefault();
             
             const keyword = $('#keyword').val();
@@ -80,7 +132,7 @@
             
             // ارسال درخواست
             $.ajax({
-                url: '{{ url_for("collector.collect_keyword") }}',
+                url: "{{ url_for('collector.collect_keyword') }}",
                 type: 'POST',
                 contentType: 'application/json',
                 data: JSON.stringify({
@@ -88,9 +140,15 @@
                     max_tweets: maxTweets
                 }),
                 success: function(response) {
+                    console.log("Success response:", response); // برای اشکال‌زدایی
                     $('#result-message').html('<div class="alert alert-success">' + response.message + '</div>');
+                    // بعد از موفقیت، صفحه را بارگذاری مجدد کنید تا لیست جمع‌آوری‌ها به‌روز شود
+                    setTimeout(function() {
+                        window.location.reload();
+                    }, 2000);
                 },
-                error: function(xhr) {
+                error: function(xhr, status, error) {
+                    console.log("Error:", xhr, status, error); // برای اشکال‌زدایی
                     let errorMsg = 'خطا در جمع‌آوری توییت‌ها';
                     if (xhr.responseJSON && xhr.responseJSON.message) {
                         errorMsg = xhr.responseJSON.message;
@@ -102,6 +160,7 @@
         
         // فرم جمع‌آوری نام کاربری
         $('#username-form').submit(function(e) {
+            console.log("Username form submitted"); // برای اشکال‌زدایی
             e.preventDefault();
             
             const username = $('#username').val();
@@ -118,7 +177,7 @@
             
             // ارسال درخواست
             $.ajax({
-                url: '{{ url_for("collector.collect_username") }}',
+                url: "{{ url_for('collector.collect_username') }}",
                 type: 'POST',
                 contentType: 'application/json',
                 data: JSON.stringify({
@@ -126,9 +185,15 @@
                     max_tweets: maxTweets
                 }),
                 success: function(response) {
+                    console.log("Success response:", response); // برای اشکال‌زدایی
                     $('#result-message').html('<div class="alert alert-success">' + response.message + '</div>');
+                    // بعد از موفقیت، صفحه را بارگذاری مجدد کنید تا لیست جمع‌آوری‌ها به‌روز شود
+                    setTimeout(function() {
+                        window.location.reload();
+                    }, 2000);
                 },
-                error: function(xhr) {
+                error: function(xhr, status, error) {
+                    console.log("Error:", xhr, status, error); // برای اشکال‌زدایی
                     let errorMsg = 'خطا در جمع‌آوری توییت‌ها';
                     if (xhr.responseJSON && xhr.responseJSON.message) {
                         errorMsg = xhr.responseJSON.message;

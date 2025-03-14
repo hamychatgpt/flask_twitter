@@ -1,0 +1,180 @@
+/* استایل‌های ویژه بخش مدیریت */
+
+.admin-tweets-container, .admin-users-container, .admin-settings-container {
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+.search-filters {
+    margin-bottom: 25px;
+    background-color: #fff;
+    padding: 15px;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.filter-form .form-row {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0 -10px;
+}
+
+.filter-form .form-group {
+    flex: 1;
+    padding: 0 10px;
+    margin-bottom: 15px;
+}
+
+.filter-form .button-group {
+    display: flex;
+    align-items: flex-end;
+}
+
+.filter-form label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.filter-form input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.tweets-table, .users-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.tweets-table th, .users-table th,
+.tweets-table td, .users-table td {
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    text-align: right;
+}
+
+.tweets-table th, .users-table th {
+    background-color: #1da1f2;
+    color: white;
+}
+
+.tweets-table tr:nth-child(even),
+.users-table tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+.tweets-table .tweet-text {
+    max-width: 400px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tweet-actions, .user-actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.btn-icon {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 5px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.btn-icon:hover {
+    background-color: #eee;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
+}
+
+.pagination-item {
+    margin: 0 5px;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #fff;
+    text-decoration: none;
+    color: #333;
+}
+
+.pagination-item.active {
+    background-color: #1da1f2;
+    color: white;
+    border-color: #1da1f2;
+}
+
+.pagination-item:hover:not(.active, .dots) {
+    background-color: #f5f5f5;
+}
+
+.pagination-item.dots {
+    border: none;
+    padding: 8px 5px;
+}
+
+/* مودال */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+    background-color: white;
+    margin: 10% auto;
+    padding: 20px;
+    border-radius: 5px;
+    width: 60%;
+    max-width: 800px;
+    position: relative;
+}
+
+.close {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.tweet-full-text {
+    white-space: pre-wrap;
+    word-break: break-word;
+    direction: rtl;
+    text-align: right;
+    padding: 10px;
+    background-color: #f5f8fa;
+    border-radius: 5px;
+    border: 1px solid #e1e8ed;
+}
+
+.settings-form {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+.form-actions {
+    margin-top: 20px;
+    display: flex;
+    gap: 10px;
+}

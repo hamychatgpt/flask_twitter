@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}تنظیمات سیستم{% endblock %}
+
+{% block content %}
+<div class="admin-settings-container">
+    <h1>تنظیمات سیستم</h1>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-container">
+                {% for category, message in messages %}
+                    <div class="flash {{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+    
+    <!-- تنظیمات اصلی -->
+    <div class="admin-section">
+        <h2>تنظیمات عمومی</h2>
+        <form method="POST" action="#" class="settings-form">
+            <div class="form-group">
+                <label for="site_title">عنوان سایت:</label>
+                <input type="text" id="site_title" name="site_title" class="form-control" value="تحلیلگر توییتر">
+            </div>
+            
+            <div class="form-group">
+                <label for="tweets_per_page">تعداد توییت در هر صفحه:</label>
+                <input type="number" id="tweets_per_page" name="tweets_per_page" class="form-control" value="20" min="5" max="100">
+            </div>
+            
+            <div class="form-group">
+                <label for="default_language">زبان پیش‌فرض:</label>
+                <select id="default_language" name="default_language" class="form-control">
+                    <option value="fa" selected>فارسی</option>
+                    <option value="en">انگلیسی</option>
+                    <option value="ar">عربی</option>
+                </select>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn">ذخیره تنظیمات</button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- تنظیمات API توییتر -->
+    <div class="admin-section">
+        <h2>تنظیمات API توییتر</h2>
+        <form method="POST" action="#" class="settings-form">
+            <div class="form-group">
+                <label for="twitter_api_key">کلید API توییتر:</label>
+                <input type="text" id="twitter_api_key" name="twitter_api_key" class="form-control" value="cf5800d7a52a4df89b5df7ffe1c7303d">
+            </div>
+            
+            <div class="form-group">
+                <label for="twitter_cache_size">اندازه کش (تعداد آیتم):</label>
+                <input type="number" id="twitter_cache_size" name="twitter_cache_size" class="form-control" value="1000" min="100" max="5000">
+            </div>
+            
+            <div class="form-group">
+                <label for="twitter_cache_ttl">زمان نگهداری کش (ثانیه):</label>
+                <input type="number" id="twitter_cache_ttl" name="twitter_cache_ttl" class="form-control" value="300" min="60" max="3600">
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn">ذخیره تنظیمات API</button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- تنظیمات ایمیل -->
+    <div class="admin-section">
+        <h2>تنظیمات ایمیل</h2>
+        <form method="POST" action="#" class="settings-form">
+            <div class="form-group">
+                <label for="mail_server">سرور SMTP:</label>
+                <input type="text" id="mail_server" name="mail_server" class="form-control" value="smtp.example.com">
+            </div>
+            
+            <div class="form-group">
+                <label for="mail_port">پورت SMTP:</label>
+                <input type="number" id="mail_port" name="mail_port" class="form-control" value="587">
+            </div>
+            
+            <div class="form-group">
+                <label for="mail_username">نام کاربری SMTP:</label>
+                <input type="text" id="mail_username" name="mail_username" class="form-control">
+            </div>
+            
+            <div class="form-group">
+                <label for="mail_password">رمز عبور SMTP:</label>
+                <input type="password" id="mail_password" name="mail_password" class="form-control">
+            </div>
+            
+            <div class="form-group">
+                <label for="mail_use_tls">استفاده از TLS:</label>
+                <input type="checkbox" id="mail_use_tls" name="mail_use_tls" checked>
+            </div>
+            
+            <div class="form-group">
+                <label for="mail_sender">آدرس فرستنده:</label>
+                <input type="email" id="mail_sender" name="mail_sender" class="form-control" value="info@twitteranalyzer.com">
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn">ذخیره تنظیمات ایمیل</button>
+                <button type="button" class="btn btn-secondary test-email">ارسال ایمیل آزمایشی</button>
+            </div>
+        </form>
+    </div>
+    
+    <div class="navigation-buttons">
+        <a href="{{ url_for('admin.index') }}" class="btn btn-secondary">بازگشت به پنل مدیریت</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // اسکریپت برای ارسال ایمیل آزمایشی
+        const testEmailButton = document.querySelector('.test-email');
+        if (testEmailButton) {
+            testEmailButton.addEventListener('click', function() {
+                alert('این قابلیت هنوز پیاده‌سازی نشده است.');
+            });
+        }
+        
+        // اسکریپت برای فرم‌های تنظیمات
+        const settingsForms = document.querySelectorAll('.settings-form');
+        settingsForms.forEach(form => {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                alert('ذخیره تنظیمات: این قابلیت هنوز پیاده‌سازی نشده است.');
+            });
+        });
+    });
+</script>
+{% endblock %}

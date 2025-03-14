@@ -150,6 +150,16 @@ class CollectorService:
     
     def collect_by_keyword(self, keyword, max_tweets=100):
         """جمع‌آوری توییت‌ها براساس کلمه کلیدی"""
+        # تبدیل max_tweets به عدد صحیح اگر رشته باشد
+        if isinstance(max_tweets, str):
+            try:
+                max_tweets = int(max_tweets)
+            except ValueError:
+                max_tweets = 100  # مقدار پیش‌فرض اگر تبدیل با خطا مواجه شود
+        
+        # اطمینان از اینکه max_tweets یک عدد معتبر است
+        max_tweets = max(1, min(1000, max_tweets))
+        
         # ایجاد جمع‌آوری جدید
         collection = Collection(
             name=f'کلمه کلیدی: {keyword}',
@@ -232,6 +242,16 @@ class CollectorService:
     
     def collect_by_username(self, username, max_tweets=100):
         """جمع‌آوری توییت‌های یک کاربر"""
+        # تبدیل max_tweets به عدد صحیح اگر رشته باشد
+        if isinstance(max_tweets, str):
+            try:
+                max_tweets = int(max_tweets)
+            except ValueError:
+                max_tweets = 100  # مقدار پیش‌فرض اگر تبدیل با خطا مواجه شود
+        
+        # اطمینان از اینکه max_tweets یک عدد معتبر است
+        max_tweets = max(1, min(1000, max_tweets))
+        
         # حذف @ از ابتدای نام کاربری در صورت وجود
         if username.startswith('@'):
             username = username[1:]

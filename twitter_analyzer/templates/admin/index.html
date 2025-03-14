@@ -29,9 +29,9 @@
             <h2>عملیات مدیریتی</h2>
             <div class="admin-actions">
                 <a href="{{ url_for('collector.index') }}" class="btn">جمع‌آوری توییت‌ها</a>
-                <a href="{{ url_for('collector.index') }}" class="btn">مدیریت توییت‌ها</a>
-                <a href="#" class="btn">مدیریت کاربران</a>
-                <a href="#" class="btn">تنظیمات سیستم</a>
+                <a href="{{ url_for('manage_tweets.index') }}" class="btn">مدیریت توییت‌ها</a>
+                <a href="{{ url_for('manage_users.index') }}" class="btn">مدیریت کاربران</a>
+                <a href="{{ url_for('settings.index') }}" class="btn">تنظیمات سیستم</a>
             </div>
         </div>
     </div>
@@ -51,21 +51,6 @@
         </div>
     </div>
     
-    <div class="row">
-        <div class="admin-section">
-            <h2>راهنمای سریع</h2>
-            <p>از این پنل می‌توانید عملیات مدیریتی سیستم تحلیل توییتر را انجام دهید:</p>
-            <ul>
-                <li><strong>جمع‌آوری توییت‌ها:</strong> جمع‌آوری توییت‌ها بر اساس کلیدواژه یا نام کاربری</li>
-                <li><strong>مدیریت توییت‌ها:</strong> مشاهده، ویرایش یا حذف توییت‌های جمع‌آوری شده</li>
-                <li><strong>مدیریت کاربران:</strong> مدیریت کاربران سیستم، ارتقا به سطح ادمین و ...</li>
-                <li><strong>تنظیمات سیستم:</strong> تنظیمات پیکربندی سیستم، محدودیت‌ها و پارامترها</li>
-            </ul>
-        </div>
-    </div>
-    
-    <div class="navigation-buttons">
-        <a href="{{ url_for('dashboard.index') }}" class="btn btn-secondary">بازگشت به داشبورد</a>
-    </div>
+
 </div>
 {% endblock %}
