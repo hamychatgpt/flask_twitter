@@ -9,7 +9,7 @@ from .config import config_by_name
 from .models import db
 from .auth.utils import login_manager
 from .twitter import twitter_api
-from .extensions import migrate, bootstrap, scheduler
+from .extensions import migrate, bootstrap, scheduler, cache
 
 def create_app(config_name='default'):
     """Application factory - ایجاد و پیکربندی اپلیکیشن Flask"""
@@ -30,6 +30,12 @@ def create_app(config_name='default'):
     
     # پیکربندی پایگاه داده
     db.init_app(app)
+    
+    # پیکربندی سیستم کش
+    cache.init_app(app, config={
+        'CACHE_TYPE': app.config.get('CACHE_TYPE', 'SimpleCache'),
+        'CACHE_DEFAULT_TIMEOUT': app.config.get('TWITTER_CACHE_TTL', 300)
+    })
     
     # پیکربندی کتابخانه‌های جدید
     migrate.init_app(app, db)

@@ -279,6 +279,17 @@ class CollectorService:
             # According to API docs, use the user/last_tweets endpoint
             current_app.logger.info(f"Fetching tweets for user: {username}")
             results = self.twitter_api.get_user_tweets(username=username)
+            tweets_data = []
+            # بررسی ساختار response
+            if 'tweets' in results:
+                # ساختار استاندارد
+                if isinstance(results['tweets'], list):
+                    tweets_data = results['tweets']
+                elif isinstance(results['tweets'], dict) and 'results' in results['tweets']:
+                    tweets_data = results['tweets']['results']
+            # ساختار جدید با data
+            elif 'data' in results and isinstance(results['data'], list):
+                tweets_data = results['data']
             
             # Log the structure for debugging
             current_app.logger.debug(f"API response type: {type(results)}")
