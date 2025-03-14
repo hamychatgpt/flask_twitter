@@ -61,6 +61,7 @@ header {
     background-color: var(--primary-color);
     color: white;
     padding: 1rem;
+    
 }
 
 nav {
@@ -80,6 +81,7 @@ nav {
 nav ul {
     display: flex;
     list-style: none;
+    direction: rtl !important
 }
 
 nav ul li {

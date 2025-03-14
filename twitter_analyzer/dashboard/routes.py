@@ -4,8 +4,13 @@ from . import dashboard_bp
 from twitter_analyzer.models.tweet import Tweet
 from twitter_analyzer.twitter import twitter_api
 
+
 @dashboard_bp.route('/')
+@login_required
+    
 def index():
+
+
     """صفحه اصلی داشبورد"""
     # داده‌های نمونه - در یک پروژه واقعی، این داده‌ها از پایگاه داده می‌آیند
     sample_data = {

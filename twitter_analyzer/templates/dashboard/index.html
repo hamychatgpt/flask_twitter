@@ -34,7 +34,17 @@
             </div>
         </div>
     </div>
-    
+    <div class="row">
+        <div class="admin-section">
+            <h2>عملیات مدیریتی</h2>
+            <div class="admin-actions">
+                <a href="{{ url_for('collector.index') }}" class="btn">جمع‌آوری توییت‌ها</a>
+                <a href="{{ url_for('manage_tweets.index') }}" class="btn">مدیریت توییت‌ها</a>
+                <a href="{{ url_for('manage_users.index') }}" class="btn">مدیریت کاربران</a>
+                <a href="{{ url_for('settings.index') }}" class="btn">تنظیمات سیستم</a>
+            </div>
+        </div>
+    </div>
     <div class="row">
         <div class="chart-container">
             <canvas id="sentimentChart"></canvas>
