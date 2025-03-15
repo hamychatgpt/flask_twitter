@@ -1,101 +1,211 @@
-{% extends 'admin/master.html' %}
+{% extends 'admin/custom_base.html' %}
 
-{% block body %}
-<div class="row">
-    <div class="col-md-12">
-        <h1>تنظیمات مانیتورینگ لحظه‌ای</h1>
+{% block title %}تنظیمات مانیتورینگ لحظه‌ای{% endblock %}
+
+{% block head %}
+{{ super() }}
+<style>
+    .settings-container {
+        background-color: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+        margin-bottom: 2rem;
+    }
+    
+    .settings-header {
+        margin-bottom: 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 1rem;
+    }
+    
+    .settings-header h2 {
+        margin: 0;
+        font-size: 1.5rem;
+        color: var(--secondary-color);
+    }
+    
+    .settings-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 2rem;
+    }
+    
+    .settings-form-container {
+        padding: 1rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+    }
+    
+    .settings-form {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .settings-form .form-group {
+        margin-bottom: 1rem;
+    }
+    
+    .settings-form label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: bold;
+    }
+    
+    .settings-form input[type="text"],
+    .settings-form input[type="number"] {
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        font-family: 'Vazir', Arial, sans-serif;
+    }
+    
+    .settings-form .help-text {
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin-top: 0.5rem;
+    }
+    
+    .settings-form .error-text {
+        color: #dc3545;
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+    }
+    
+    .settings-form .checkbox-container {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .settings-form .checkbox-container input[type="checkbox"] {
+        margin: 0;
+    }
+    
+    .settings-actions {
+        margin-top: 1.5rem;
+        display: flex;
+        gap: 1rem;
+    }
+    
+    .settings-help {
+        padding: 1rem;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        border: 1px solid #e9ecef;
+    }
+    
+    .settings-help h4 {
+        color: var(--primary-color);
+        margin-top: 0;
+        border-bottom: 1px solid #e9ecef;
+        padding-bottom: 0.5rem;
+    }
+    
+    .settings-help p {
+        font-size: 0.95rem;
+        margin-bottom: 1rem;
+    }
+    
+    .settings-alert {
+        background-color: #fff3cd;
+        color: #856404;
+        padding: 1rem;
+        border-radius: 8px;
+        border: 1px solid #ffeeba;
+        margin-top: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="settings-container">
+    <div class="settings-header">
+        <h2>تنظیمات مانیتورینگ لحظه‌ای</h2>
         <p>در این بخش می‌توانید تنظیمات مانیتورینگ لحظه‌ای را تغییر دهید.</p>
     </div>
-</div>
 
-<div class="row">
-    <div class="col-md-8">
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h3 class="panel-title">ویرایش تنظیمات</h3>
-            </div>
-            <div class="panel-body">
-                <form method="post" action="{{ url_for('.settings') }}">
-                    <div class="form-group">
-                        <label for="default_keywords">کلمات کلیدی پیش‌فرض (جدا شده با کاما):</label>
-                        <input type="text" class="form-control" id="default_keywords" name="default_keywords" value="{{ form.default_keywords.data }}">
-                        {% if form.default_keywords.errors %}
-                            <div class="text-danger">
-                                {% for error in form.default_keywords.errors %}
-                                    {{ error }}
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                        <p class="help-block">این کلمات کلیدی به صورت پیش‌فرض برای ردیابی استفاده می‌شوند.</p>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="tracking_interval">بازه زمانی بررسی (ثانیه):</label>
-                        <input type="number" class="form-control" id="tracking_interval" name="tracking_interval" value="{{ form.tracking_interval.data }}" min="10" max="3600">
-                        {% if form.tracking_interval.errors %}
-                            <div class="text-danger">
-                                {% for error in form.tracking_interval.errors %}
-                                    {{ error }}
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                        <p class="help-block">فاصله زمانی بین بررسی‌های API توییتر (بین 10 تا 3600 ثانیه).</p>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="analysis_threshold">آستانه امتیاز تعامل برای تحلیل پیشرفته:</label>
-                        <input type="number" class="form-control" id="analysis_threshold" name="analysis_threshold" value="{{ form.analysis_threshold.data }}" min="10">
-                        {% if form.analysis_threshold.errors %}
-                            <div class="text-danger">
-                                {% for error in form.analysis_threshold.errors %}
-                                    {{ error }}
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                        <p class="help-block">توییت‌هایی که امتیاز تعامل آنها بیشتر از این مقدار باشد، توسط هوش مصنوعی تحلیل می‌شوند.</p>
-                    </div>
-                    
-                    <div class="checkbox">
-                        <label>
-                            <input type="checkbox" name="auto_start" {% if form.auto_start.data %}checked{% endif %}>
-                            شروع خودکار ردیابی در زمان راه‌اندازی برنامه
-                        </label>
-                    </div>
-                    
-                    <button type="submit" class="btn btn-primary">ذخیره تنظیمات</button>
-                    <a href="{{ url_for('.index') }}" class="btn btn-default">بازگشت</a>
-                </form>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-4">
-        <div class="panel panel-info">
-            <div class="panel-heading">
-                <h3 class="panel-title">راهنما</h3>
-            </div>
-            <div class="panel-body">
-                <h4>کلمات کلیدی</h4>
-                <p>
-                    کلمات کلیدی را با کاما از هم جدا کنید. مثال: <code>ایران, انتخابات, اقتصاد</code>
-                </p>
-                
-                <h4>بازه زمانی بررسی</h4>
-                <p>
-                    این مقدار مشخص می‌کند هر چند ثانیه یکبار، API توییتر برای کلمات کلیدی بررسی شود. 
-                    مقادیر کمتر باعث بروزرسانی سریع‌تر می‌شود، اما ممکن است با محدودیت‌های API مواجه شوید.
-                </p>
-                
-                <h4>آستانه تحلیل هوش مصنوعی</h4>
-                <p>
-                    امتیاز تعامل از جمع وزنی لایک‌ها، ریتوییت‌ها و پاسخ‌ها محاسبه می‌شود. 
-                    مثلاً یک توییت با 50 لایک، 10 ریتوییت و 5 پاسخ، امتیاز 90 دارد (50 + 10×2 + 5×3).
-                </p>
-                
-                <div class="alert alert-warning">
-                    <strong>توجه!</strong> این تنظیمات فقط تا راه‌اندازی مجدد برنامه معتبر هستند.
-                    برای ذخیره دائمی آنها، باید در فایل تنظیمات یا متغیرهای محیطی تغییر ایجاد کنید.
+    <div class="settings-grid">
+        <div class="settings-form-container">
+            <form method="post" action="{{ url_for('.settings') }}" class="settings-form">
+                <div class="form-group">
+                    <label for="default_keywords">کلمات کلیدی پیش‌فرض (جدا شده با کاما):</label>
+                    <input type="text" id="default_keywords" name="default_keywords" value="{{ form.default_keywords.data }}">
+                    {% if form.default_keywords.errors %}
+                        <div class="error-text">
+                            {% for error in form.default_keywords.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    <div class="help-text">این کلمات کلیدی به صورت پیش‌فرض برای ردیابی استفاده می‌شوند.</div>
                 </div>
+                
+                <div class="form-group">
+                    <label for="tracking_interval">بازه زمانی بررسی (ثانیه):</label>
+                    <input type="number" id="tracking_interval" name="tracking_interval" value="{{ form.tracking_interval.data }}" min="10" max="3600">
+                    {% if form.tracking_interval.errors %}
+                        <div class="error-text">
+                            {% for error in form.tracking_interval.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    <div class="help-text">فاصله زمانی بین بررسی‌های API توییتر (بین 10 تا 3600 ثانیه).</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="analysis_threshold">آستانه امتیاز تعامل برای تحلیل پیشرفته:</label>
+                    <input type="number" id="analysis_threshold" name="analysis_threshold" value="{{ form.analysis_threshold.data }}" min="10">
+                    {% if form.analysis_threshold.errors %}
+                        <div class="error-text">
+                            {% for error in form.analysis_threshold.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    <div class="help-text">توییت‌هایی که امتیاز تعامل آنها بیشتر از این مقدار باشد، توسط هوش مصنوعی تحلیل می‌شوند.</div>
+                </div>
+                
+                <div class="form-group">
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="auto_start" name="auto_start" {% if form.auto_start.data %}checked{% endif %}>
+                        <label for="auto_start">شروع خودکار ردیابی در زمان راه‌اندازی برنامه</label>
+                    </div>
+                </div>
+                
+                <div class="settings-actions">
+                    <button type="submit" class="btn btn-view">ذخیره تنظیمات</button>
+                    <a href="{{ url_for('.index') }}" class="btn">بازگشت</a>
+                </div>
+            </form>
+        </div>
+        
+        <div class="settings-help">
+            <h4>راهنما</h4>
+            
+            <h5>کلمات کلیدی</h5>
+            <p>
+                کلمات کلیدی را با کاما از هم جدا کنید. مثال: <code>ایران, انتخابات, اقتصاد</code>
+            </p>
+            
+            <h5>بازه زمانی بررسی</h5>
+            <p>
+                این مقدار مشخص می‌کند هر چند ثانیه یکبار، API توییتر برای کلمات کلیدی بررسی شود. 
+                مقادیر کمتر باعث بروزرسانی سریع‌تر می‌شود، اما ممکن است با محدودیت‌های API مواجه شوید.
+            </p>
+            
+            <h5>آستانه تحلیل هوش مصنوعی</h5>
+            <p>
+                امتیاز تعامل از جمع وزنی لایک‌ها، ریتوییت‌ها و پاسخ‌ها محاسبه می‌شود. 
+                مثلاً یک توییت با 50 لایک، 10 ریتوییت و 5 پاسخ، امتیاز 90 دارد (50 + 10×2 + 5×3).
+            </p>
+            
+            <div class="settings-alert">
+                <strong>توجه!</strong> این تنظیمات فقط تا راه‌اندازی مجدد برنامه معتبر هستند.
+                برای ذخیره دائمی آنها، باید در فایل تنظیمات یا متغیرهای محیطی تغییر ایجاد کنید.
             </div>
         </div>
     </div>

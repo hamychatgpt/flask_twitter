@@ -19,23 +19,27 @@
 </head>
 <body>
     <header>
-        <nav class="ltr">
-            <div class="logo">هـوشیـار</div>
-            <ul>
-                <li><a href="{{ url_for('dashboard.index') }}">داشبورد</a></li>
-                {% if current_user.is_authenticated %} 
-                <li><a href="{{ url_for('admin.index') }}">مدیریت</a></li>
-                {% endif %}
-                <li><a href="{{ url_for('dashboard.analysis') }}">تحلیل</a></li>
-                <li><a href="{{ url_for('dashboard.search') }}">جستجو</a></li>
-                {% if current_user.is_authenticated %}
-                    <li><a href="{{ url_for('auth.logout') }}">خروج</a></li>
-                {% else %}
-                    <li><a href="{{ url_for('auth.login') }}">ورود</a></li>
-                    <li><a href="{{ url_for('auth.register') }}">ثبت‌نام</a></li>
-                {% endif %}
-            </ul>
-        </nav>
+        <header>
+            <nav class="ltr">
+                <div class="logo">هـوشیـار</div>
+                <ul>
+                    <li><a href="{{ url_for('dashboard.index') }}">داشبورد</a></li>
+                    {% if current_user.is_authenticated %} 
+                    <li><a href="{{ url_for('admin.index') }}">مدیریت</a></li>
+                    <li><a href="{{ url_for('reports.index') }}">گزارش‌ها</a></li>
+                    <li><a href="{{ url_for('realtime.monitor') }}">رصد لحظه‌ای</a></li>
+                    {% endif %}
+                    <li><a href="{{ url_for('dashboard.analysis') }}">تحلیل</a></li>
+                    <li><a href="{{ url_for('dashboard.search') }}">جستجو</a></li>
+                    {% if current_user.is_authenticated %}
+                        <li><a href="{{ url_for('auth.logout') }}">خروج</a></li>
+                    {% else %}
+                        <li><a href="{{ url_for('auth.login') }}">ورود</a></li>
+                        <li><a href="{{ url_for('auth.register') }}">ثبت‌نام</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </header>
     </header>
     
     <main>

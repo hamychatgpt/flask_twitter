@@ -4,535 +4,179 @@
     {{ title }} - گزارش‌های توییتر
 {% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/reports-style.css') }}">
+{% endblock %}
+
 {% block content %}
-<div class="row">
-    <div class="col-md-12">
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title">گزارش‌های تحلیلی توییتر</h3>
-                {% if current_user.is_admin %}
-                <div class="float-right">
-                    <button type="button" class="btn btn-primary" id="generate-report-btn">
-                        گزارش جدید
-                    </button>
-                </div>
-                {% endif %}
-            </div>
-            <div class="card-body">
-                <div class="alert alert-info" id="status">
-                    در حال بارگذاری گزارش‌ها...
-                </div>
-                
-                <div class="table-responsive">
-                    <table class="table table-striped" id="reports-table">
-                        <thead>
-                            <tr>
-                                <th>شناسه</th>
-                                <th>بازه زمانی</th>
-                                <th>تاریخ ایجاد</th>
-                                <th>تعداد توییت‌ها</th>
-                                <th>کلمات کلیدی</th>
-                                <th>عملیات</th>
-                            </tr>
-                        </thead>
-                        <tbody id="reports-tbody">
-                            <!-- گزارش‌ها اینجا نمایش داده می‌شوند -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+<div class="reports-container">
+    <div class="reports-header">
+        <h1>گزارش‌های تحلیلی توییتر</h1>
+        {% if current_user.is_admin %}
+        <button type="button" class="btn" id="generate-report-btn">
+            گزارش جدید
+        </button>
+        {% endif %}
+    </div>
+    
+    <div class="reports-status" id="status">
+        در حال بارگذاری گزارش‌ها...
+    </div>
+    
+    <div class="reports-content">
+        <table class="reports-table" id="reports-table">
+            <thead>
+                <tr>
+                    <th>شناسه</th>
+                    <th>بازه زمانی</th>
+                    <th>تاریخ ایجاد</th>
+                    <th>تعداد توییت‌ها</th>
+                    <th>کلمات کلیدی</th>
+                    <th>عملیات</th>
+                </tr>
+            </thead>
+            <tbody id="reports-tbody">
+                <!-- گزارش‌ها اینجا نمایش داده می‌شوند -->
+            </tbody>
+        </table>
     </div>
 </div>
 
-<!-- Modal for generating report -->
-<div class="modal fade" id="generate-report-modal" tabindex="-1" role="dialog" aria-labelledby="generate-report-label" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="generate-report-label">گزارش جدید</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form id="generate-report-form">
-                    <div class="form-group">
-                        <label for="period-select">بازه زمانی</label>
-                        <select class="form-control" id="period-select" name="period">
-                            <option value="minute">دقیقه گذشته</option>
-                            <option value="hour" selected>ساعت گذشته</option>
-                            <option value="day">روز گذشته</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="keywords-input">کلمات کلیدی (اختیاری، جدا شده با کاما)</label>
-                        <input type="text" class="form-control" id="keywords-input" name="keywords" placeholder="کلمه۱, کلمه۲, ...">
-                    </div>
-                </form>
-                <div class="alert alert-danger d-none" id="generate-error">
+<!-- مودال تولید گزارش -->
+<div class="modal-overlay" id="generate-report-modal">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h5 class="modal-title">گزارش جدید</h5>
+            <button type="button" class="modal-close" id="close-generate-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="generate-report-form" class="generate-form">
+                <div class="form-group">
+                    <label for="period-select">بازه زمانی</label>
+                    <select id="period-select" name="period">
+                        <option value="minute">دقیقه گذشته</option>
+                        <option value="hour" selected>ساعت گذشته</option>
+                        <option value="day">روز گذشته</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="keywords-input">کلمات کلیدی (اختیاری، جدا شده با کاما)</label>
+                    <input type="text" id="keywords-input" name="keywords" placeholder="کلمه۱, کلمه۲, ...">
+                </div>
+                <div class="form-error" id="generate-error">
                     خطا در تولید گزارش
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">انصراف</button>
-                <button type="button" class="btn btn-primary" id="submit-generate-report">تولید گزارش</button>
-            </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn" id="cancel-generate-btn">انصراف</button>
+            <button type="button" class="btn btn-view" id="submit-generate-report">تولید گزارش</button>
         </div>
     </div>
 </div>
 
-<!-- Modal for viewing report details -->
-<div class="modal fade" id="report-details-modal" tabindex="-1" role="dialog" aria-labelledby="report-details-label" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="report-details-label">جزئیات گزارش</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+<!-- مودال نمایش جزئیات گزارش -->
+<div class="modal-overlay" id="report-details-modal">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h5 class="modal-title">جزئیات گزارش</h5>
+            <button type="button" class="modal-close" id="close-details-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-error" id="details-error">
+                خطا در بارگذاری جزئیات
             </div>
-            <div class="modal-body">
-                <div class="alert alert-danger d-none" id="details-error">
-                    خطا در بارگذاری جزئیات
+            
+            <!-- گزارش خلاصه -->
+            <div class="report-card">
+                <div class="report-card-header">
+                    <h5>خلاصه</h5>
                 </div>
-                
-                <!-- گزارش خلاصه -->
-                <div class="card mb-3">
-                    <div class="card-header">
-                        <h5>خلاصه</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <dl>
-                                    <dt>بازه زمانی</dt>
-                                    <dd id="report-period"></dd>
-                                    
-                                    <dt>زمان شروع</dt>
-                                    <dd id="report-start-time"></dd>
-                                    
-                                    <dt>زمان پایان</dt>
-                                    <dd id="report-end-time"></dd>
-                                </dl>
-                            </div>
-                            <div class="col-md-6">
-                                <dl>
-                                    <dt>تعداد توییت‌ها</dt>
-                                    <dd id="report-total-tweets"></dd>
-                                    
-                                    <dt>مجموع لایک‌ها</dt>
-                                    <dd id="report-total-likes"></dd>
-                                    
-                                    <dt>مجموع ریتوییت‌ها</dt>
-                                    <dd id="report-total-retweets"></dd>
-                                </dl>
-                            </div>
+                <div class="report-card-body">
+                    <div class="report-info-list">
+                        <div class="report-info-item">
+                            <dt>بازه زمانی</dt>
+                            <dd id="report-period"></dd>
+                            
+                            <dt>زمان شروع</dt>
+                            <dd id="report-start-time"></dd>
+                            
+                            <dt>زمان پایان</dt>
+                            <dd id="report-end-time"></dd>
+                        </div>
+                        <div class="report-info-item">
+                            <dt>تعداد توییت‌ها</dt>
+                            <dd id="report-total-tweets"></dd>
+                            
+                            <dt>مجموع لایک‌ها</dt>
+                            <dd id="report-total-likes"></dd>
+                            
+                            <dt>مجموع ریتوییت‌ها</dt>
+                            <dd id="report-total-retweets"></dd>
                         </div>
                     </div>
                 </div>
-                
-                <!-- تحلیل احساسات -->
-                <div class="card mb-3">
-                    <div class="card-header">
-                        <h5>تحلیل احساسات</h5>
+            </div>
+            
+            <!-- تحلیل احساسات -->
+            <div class="report-card">
+                <div class="report-card-header">
+                    <h5>تحلیل احساسات</h5>
+                </div>
+                <div class="report-card-body">
+                    <div id="sentiment-chart" class="chart-container"></div>
+                </div>
+            </div>
+            
+            <!-- هشتگ‌ها و منشن‌ها -->
+            <div class="reports-grid">
+                <div class="report-card">
+                    <div class="report-card-header">
+                        <h5>هشتگ‌های برتر</h5>
                     </div>
-                    <div class="card-body">
-                        <div id="sentiment-chart" style="height: 200px;"></div>
+                    <div class="report-card-body">
+                        <ul class="report-list" id="top-hashtags"></ul>
                     </div>
                 </div>
-                
-                <!-- هشتگ‌ها و منشن‌ها -->
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="card mb-3">
-                            <div class="card-header">
-                                <h5>هشتگ‌های برتر</h5>
-                            </div>
-                            <div class="card-body">
-                                <ul id="top-hashtags"></ul>
-                            </div>
-                        </div>
+                <div class="report-card">
+                    <div class="report-card-header">
+                        <h5>منشن‌های برتر</h5>
                     </div>
-                    <div class="col-md-6">
-                        <div class="card mb-3">
-                            <div class="card-header">
-                                <h5>منشن‌های برتر</h5>
-                            </div>
-                            <div class="card-body">
-                                <ul id="top-mentions"></ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- تحلیل هوش مصنوعی -->
-                <div class="card mb-3 d-none" id="ai-analysis-card">
-                    <div class="card-header">
-                        <h5>تحلیل هوش مصنوعی</h5>
-                    </div>
-                    <div class="card-body">
-                        <pre id="ai-analysis-content"></pre>
-                    </div>
-                </div>
-                
-                <!-- توییت‌های برتر -->
-                <div class="card">
-                    <div class="card-header">
-                        <h5>توییت‌های برتر</h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="top-tweets"></div>
+                    <div class="report-card-body">
+                        <ul class="report-list" id="top-mentions"></ul>
                     </div>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">بستن</button>
+            
+            <!-- تحلیل هوش مصنوعی -->
+            <div class="report-card" id="ai-analysis-card" style="display: none;">
+                <div class="report-card-header">
+                    <h5>تحلیل هوش مصنوعی</h5>
+                </div>
+                <div class="report-card-body">
+                    <pre id="ai-analysis-content" style="direction: rtl; text-align: right;"></pre>
+                </div>
             </div>
+            
+            <!-- توییت‌های برتر -->
+            <div class="report-card">
+                <div class="report-card-header">
+                    <h5>توییت‌های برتر</h5>
+                </div>
+                <div class="report-card-body">
+                    <div id="top-tweets"></div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn" id="close-details-btn">بستن</button>
         </div>
     </div>
 </div>
 {% endblock %}
 
-{% block scripts %}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.min.js"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // عناصر صفحه
-        const statusElement = document.getElementById('status');
-        const reportsTableBody = document.getElementById('reports-tbody');
-        const generateReportBtn = document.getElementById('generate-report-btn');
-        const generateReportModal = document.getElementById('generate-report-modal');
-        const generateReportForm = document.getElementById('generate-report-form');
-        const submitGenerateReportBtn = document.getElementById('submit-generate-report');
-        const generateErrorElement = document.getElementById('generate-error');
-        const reportDetailsModal = document.getElementById('report-details-modal');
-        const detailsErrorElement = document.getElementById('details-error');
-        
-        // دریافت لیست گزارش‌ها
-        fetchReports();
-        
-        // گوش دادن به رویدادها
-        if (generateReportBtn) {
-            generateReportBtn.addEventListener('click', function() {
-                $(generateReportModal).modal('show');
-            });
-        }
-        
-        submitGenerateReportBtn.addEventListener('click', function() {
-            generateReport();
-        });
-        
-        // تابع دریافت لیست گزارش‌ها
-        function fetchReports() {
-            statusElement.textContent = 'در حال بارگذاری گزارش‌ها...';
-            statusElement.className = 'alert alert-info';
-            
-            fetch('/reports/summary')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'success') {
-                        if (data.reports.length === 0) {
-                            statusElement.textContent = 'هیچ گزارشی یافت نشد.';
-                            statusElement.className = 'alert alert-warning';
-                        } else {
-                            statusElement.style.display = 'none';
-                            renderReportsTable(data.reports);
-                        }
-                    } else {
-                        statusElement.textContent = data.message || 'خطا در بارگذاری گزارش‌ها';
-                        statusElement.className = 'alert alert-danger';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error fetching reports:', error);
-                    statusElement.textContent = 'خطا در بارگذاری گزارش‌ها';
-                    statusElement.className = 'alert alert-danger';
-                });
-        }
-        
-        // تابع رندر جدول گزارش‌ها
-        function renderReportsTable(reports) {
-            reportsTableBody.innerHTML = '';
-            
-            reports.forEach(report => {
-                const row = document.createElement('tr');
-                
-                // تبدیل تاریخ‌ها
-                const createdDate = new Date(report.created_at);
-                
-                row.innerHTML = `
-                    <td>${report.id}</td>
-                    <td>${report.period_name || report.period}</td>
-                    <td>${createdDate.toLocaleString()}</td>
-                    <td>${report.total_tweets}</td>
-                    <td>${report.keywords && report.keywords.length > 0 ? report.keywords.join(', ') : '-'}</td>
-                    <td>
-                        <button class="btn btn-sm btn-info view-report" data-id="${report.id}">
-                            مشاهده
-                        </button>
-                    </td>
-                `;
-                
-                reportsTableBody.appendChild(row);
-            });
-            
-            // اضافه کردن رویداد به دکمه‌های مشاهده
-            document.querySelectorAll('.view-report').forEach(button => {
-                button.addEventListener('click', function() {
-                    const reportId = this.getAttribute('data-id');
-                    viewReportDetails(reportId);
-                });
-            });
-        }
-        
-        // تابع تولید گزارش جدید
-        function generateReport() {
-            // جمع‌آوری داده‌های فرم
-            const formData = new FormData(generateReportForm);
-            const period = formData.get('period');
-            const keywordsStr = formData.get('keywords');
-            
-            // پردازش کلمات کلیدی
-            let keywords = null;
-            if (keywordsStr) {
-                keywords = keywordsStr.split(',').map(k => k.trim()).filter(k => k);
-            }
-            
-            // نمایش وضعیت بارگذاری
-            submitGenerateReportBtn.disabled = true;
-            submitGenerateReportBtn.textContent = 'در حال تولید...';
-            generateErrorElement.classList.add('d-none');
-            
-            // ارسال درخواست
-            fetch('/reports/generate', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    period: period,
-                    keywords: keywords
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                submitGenerateReportBtn.disabled = false;
-                submitGenerateReportBtn.textContent = 'تولید گزارش';
-                
-                if (data.status === 'success') {
-                    // بستن مودال و بروزرسانی لیست
-                    $(generateReportModal).modal('hide');
-                    fetchReports();
-                    
-                    // نمایش جزئیات گزارش جدید
-                    if (data.report && data.report.period) {
-                        renderReportDetails(data.report);
-                        $(reportDetailsModal).modal('show');
-                    }
-                } else {
-                    generateErrorElement.textContent = data.message || 'خطا در تولید گزارش';
-                    generateErrorElement.classList.remove('d-none');
-                }
-            })
-            .catch(error => {
-                console.error('Error generating report:', error);
-                submitGenerateReportBtn.disabled = false;
-                submitGenerateReportBtn.textContent = 'تولید گزارش';
-                generateErrorElement.textContent = 'خطا در تولید گزارش';
-                generateErrorElement.classList.remove('d-none');
-            });
-        }
-        
-        // تابع مشاهده جزئیات گزارش
-        function viewReportDetails(reportId) {
-            // نمایش وضعیت بارگذاری
-            document.getElementById('report-period').textContent = 'در حال بارگذاری...';
-            detailsErrorElement.classList.add('d-none');
-            
-            // نمایش مودال
-            $(reportDetailsModal).modal('show');
-            
-            // دریافت جزئیات گزارش
-            fetch(`/reports/${reportId}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'success' && data.report) {
-                        renderReportDetails(data.report);
-                    } else {
-                        detailsErrorElement.textContent = data.message || 'خطا در بارگذاری جزئیات گزارش';
-                        detailsErrorElement.classList.remove('d-none');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error fetching report details:', error);
-                    detailsErrorElement.textContent = 'خطا در بارگذاری جزئیات گزارش';
-                    detailsErrorElement.classList.remove('d-none');
-                });
-        }
-        
-        // تابع رندر جزئیات گزارش
-        function renderReportDetails(report) {
-            const periodDisplay = {
-                'minute': 'دقیقه گذشته',
-                'hour': 'ساعت گذشته',
-                'day': 'روز گذشته'
-            };
-            
-            // اطلاعات پایه
-            document.getElementById('report-period').textContent = report.period_name || periodDisplay[report.period] || report.period;
-            document.getElementById('report-start-time').textContent = new Date(report.start_time).toLocaleString();
-            document.getElementById('report-end-time').textContent = new Date(report.end_time).toLocaleString();
-            
-            // آمار
-            const stats = report.stats || {};
-            document.getElementById('report-total-tweets').textContent = stats.total_tweets || 0;
-            document.getElementById('report-total-likes').textContent = stats.total_likes || 0;
-            document.getElementById('report-total-retweets').textContent = stats.total_retweets || 0;
-            
-            // هشتگ‌های برتر
-            const topHashtagsElement = document.getElementById('top-hashtags');
-            topHashtagsElement.innerHTML = '';
-            
-            if (stats.top_hashtags && stats.top_hashtags.length > 0) {
-                stats.top_hashtags.forEach(hashtag => {
-                    const li = document.createElement('li');
-                    li.textContent = `#${hashtag.text} (${hashtag.count})`;
-                    topHashtagsElement.appendChild(li);
-                });
-            } else {
-                topHashtagsElement.innerHTML = '<li>هیچ هشتگی یافت نشد</li>';
-            }
-            
-            // منشن‌های برتر
-            const topMentionsElement = document.getElementById('top-mentions');
-            topMentionsElement.innerHTML = '';
-            
-            if (stats.top_mentions && stats.top_mentions.length > 0) {
-                stats.top_mentions.forEach(mention => {
-                    const li = document.createElement('li');
-                    li.textContent = `@${mention.username} (${mention.count})`;
-                    topMentionsElement.appendChild(li);
-                });
-            } else {
-                topMentionsElement.innerHTML = '<li>هیچ منشنی یافت نشد</li>';
-            }
-            
-            // نمودار احساسات
-            renderSentimentChart(stats.sentiment || {});
-            
-            // تحلیل هوش مصنوعی
-            const aiAnalysisCard = document.getElementById('ai-analysis-card');
-            const aiAnalysisContent = document.getElementById('ai-analysis-content');
-            
-            if (stats.ai_analysis) {
-                aiAnalysisContent.textContent = JSON.stringify(stats.ai_analysis, null, 2);
-                aiAnalysisCard.classList.remove('d-none');
-            } else {
-                aiAnalysisCard.classList.add('d-none');
-            }
-            
-            // توییت‌های برتر
-            const topTweetsElement = document.getElementById('top-tweets');
-            topTweetsElement.innerHTML = '';
-            
-            if (report.top_tweets && report.top_tweets.length > 0) {
-                report.top_tweets.forEach(tweet => {
-                    // تعیین کلاس رنگ بر اساس احساسات
-                    let sentimentClass = 'bg-light';
-                    if (tweet.sentiment === 'positive') {
-                        sentimentClass = 'border-success';
-                    } else if (tweet.sentiment === 'negative') {
-                        sentimentClass = 'border-danger';
-                    }
-                    
-                    const tweetCard = document.createElement('div');
-                    tweetCard.className = `card mb-3 ${sentimentClass}`;
-                    
-                    tweetCard.innerHTML = `
-                        <div class="card-body">
-                            <p>${tweet.text}</p>
-                            <div class="d-flex justify-content-between">
-                                <div>
-                                    <span class="badge badge-primary">لایک: ${tweet.likes || 0}</span>
-                                    <span class="badge badge-success">ریتوییت: ${tweet.retweets || 0}</span>
-                                    <span class="badge badge-info">پاسخ: ${tweet.replies || 0}</span>
-                                </div>
-                                <small class="text-muted">ID: ${tweet.id}</small>
-                            </div>
-                        </div>
-                    `;
-                    
-                    topTweetsElement.appendChild(tweetCard);
-                });
-            } else {
-                topTweetsElement.innerHTML = '<p class="text-center">هیچ توییتی یافت نشد</p>';
-            }
-        }
-        
-        // تابع رندر نمودار احساسات
-        function renderSentimentChart(sentimentData) {
-            const ctx = document.getElementById('sentiment-chart').getContext('2d');
-            
-            // تبدیل داده‌ها به فرمت مناسب چارت
-            const labels = [];
-            const data = [];
-            const colors = [];
-            
-            if (sentimentData.positive) {
-                labels.push('مثبت');
-                data.push(sentimentData.positive);
-                colors.push('#28a745');
-            }
-            
-            if (sentimentData.negative) {
-                labels.push('منفی');
-                data.push(sentimentData.negative);
-                colors.push('#dc3545');
-            }
-            
-            if (sentimentData.neutral) {
-                labels.push('خنثی');
-                data.push(sentimentData.neutral);
-                colors.push('#6c757d');
-            }
-            
-            if (sentimentData.unknown) {
-                labels.push('نامشخص');
-                data.push(sentimentData.unknown);
-                colors.push('#17a2b8');
-            }
-            
-            // پاکسازی کانواس قبلی (برای جلوگیری از تداخل با چارت‌های قبلی)
-            const parentNode = ctx.canvas.parentNode;
-            ctx.canvas.remove();
-            const canvas = document.createElement('canvas');
-            canvas.id = 'sentiment-chart';
-            canvas.style.height = '200px';
-            parentNode.appendChild(canvas);
-            
-            // ایجاد چارت جدید
-            new Chart(canvas, {
-                type: 'doughnut',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: data,
-                        backgroundColor: colors,
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'right',
-                        }
-                    }
-                }
-            });
-        }
-    });
-</script>
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/reports.js') }}"></script>
+
+
 {% endblock %}

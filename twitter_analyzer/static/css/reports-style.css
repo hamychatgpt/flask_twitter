@@ -1,0 +1,539 @@
+/* استایل‌های ویژه بخش گزارش‌ها */
+
+.reports-container {
+    background-color: white;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    margin-bottom: 2rem;
+}
+
+.reports-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 1rem;
+}
+
+.reports-header h1 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: var(--secondary-color);
+}
+
+.reports-status {
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    color: #0c85d0;
+}
+
+.reports-status.success {
+    color: #28a745;
+}
+
+.reports-status.error {
+    color: #dc3545;
+}
+
+.reports-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1rem;
+}
+
+.reports-table th, 
+.reports-table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+    text-align: right;
+}
+
+.reports-table th {
+    font-weight: bold;
+    background-color: #f8f9fa;
+}
+
+.reports-table tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+.report-action-btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.85rem;
+    display: inline-block;
+    text-decoration: none;
+}
+
+.btn-view {
+    background-color: var(--primary-color);
+    color: white;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-view:hover {
+    background-color: #0c85d0;
+}
+
+/* مودال گزارش */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    display: none;
+}
+
+.modal-container {
+    background-color: white;
+    border-radius: 8px;
+    width: 80%;
+    max-width: 800px;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+}
+
+.modal-header {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-title {
+    margin: 0;
+    font-size: 1.25rem;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #6c757d;
+}
+
+.modal-body {
+    padding: 1rem;
+}
+
+.modal-footer {
+    padding: 1rem;
+    border-top: 1px solid var(--border-color);
+    text-align: left;
+}
+
+/* کارت‌های گزارش */
+.report-card {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.report-card-header {
+    padding: 0.75rem 1rem;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid var(--border-color);
+    font-weight: bold;
+}
+
+.report-card-body {
+    padding: 1rem;
+}
+
+.report-info-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.report-info-item dt {
+    font-weight: bold;
+    margin-bottom: 0.25rem;
+}
+
+.report-info-item dd {
+    margin-left: 0;
+    margin-bottom: 0.5rem;
+}
+
+/* نمودارها */
+.chart-container {
+    height: 300px;
+    margin-bottom: 1rem;
+}
+
+/* لیست‌های گزارش */
+.report-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.report-list li {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+/* توییت‌های گزارش */
+.report-tweet {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.report-tweet-text {
+    margin-bottom: 0.75rem;
+}
+
+.report-tweet-stats {
+    display: flex;
+    gap: 1rem;
+    color: #6c757d;
+    font-size: 0.85rem;
+}
+
+.report-tweet.positive {
+    border-color: #28a745;
+    border-right: 4px solid #28a745;
+}
+
+.report-tweet.negative {
+    border-color: #dc3545;
+    border-right: 4px solid #dc3545;
+}
+
+/* فرم تولید گزارش */
+.generate-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+}
+
+.form-group select,
+.form-group input {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-family: 'Vazir', Arial, sans-serif;
+}
+
+.form-error {
+    color: #dc3545;
+    margin-top: 0.5rem;
+    display: none;
+}
+
+/* واکنش‌گرایی */
+@media (max-width: 768px) {
+    .reports-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .reports-header button {
+        margin-top: 1rem;
+    }
+    
+    .modal-container {
+        width: 95%;
+    }
+}
+
+
+
+/* استایل‌های ویژه بخش گزارش‌ها */
+
+.reports-container {
+    background-color: white;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    margin-bottom: 2rem;
+}
+
+.reports-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 1rem;
+}
+
+.reports-header h1 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: var(--secondary-color);
+}
+
+.reports-status {
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    color: #0c85d0;
+}
+
+.reports-status.success {
+    color: #28a745;
+}
+
+.reports-status.error {
+    color: #dc3545;
+}
+
+.reports-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1rem;
+}
+
+.reports-table th, 
+.reports-table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+    text-align: right;
+}
+
+.reports-table th {
+    font-weight: bold;
+    background-color: #f8f9fa;
+}
+
+.reports-table tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+.report-action-btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.85rem;
+    display: inline-block;
+    text-decoration: none;
+}
+
+.btn-view {
+    background-color: var(--primary-color);
+    color: white;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-view:hover {
+    background-color: #0c85d0;
+}
+
+/* مودال گزارش */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    display: none;
+}
+
+.modal-container {
+    background-color: white;
+    border-radius: 8px;
+    width: 80%;
+    max-width: 800px;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+}
+
+.modal-header {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-title {
+    margin: 0;
+    font-size: 1.25rem;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #6c757d;
+}
+
+.modal-body {
+    padding: 1rem;
+}
+
+.modal-footer {
+    padding: 1rem;
+    border-top: 1px solid var(--border-color);
+    text-align: left;
+}
+
+/* کارت‌های گزارش */
+.report-card {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.report-card-header {
+    padding: 0.75rem 1rem;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid var(--border-color);
+    font-weight: bold;
+}
+
+.report-card-body {
+    padding: 1rem;
+}
+
+.report-info-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.report-info-item dt {
+    font-weight: bold;
+    margin-bottom: 0.25rem;
+}
+
+.report-info-item dd {
+    margin-left: 0;
+    margin-bottom: 0.5rem;
+}
+
+/* نمودارها */
+.chart-container {
+    height: 300px;
+    margin-bottom: 1rem;
+}
+
+/* لیست‌های گزارش */
+.report-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.report-list li {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+/* توییت‌های گزارش */
+.report-tweet {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.report-tweet-text {
+    margin-bottom: 0.75rem;
+}
+
+.report-tweet-stats {
+    display: flex;
+    gap: 1rem;
+    color: #6c757d;
+    font-size: 0.85rem;
+}
+
+.report-tweet.positive {
+    border-color: #28a745;
+    border-right: 4px solid #28a745;
+}
+
+.report-tweet.negative {
+    border-color: #dc3545;
+    border-right: 4px solid #dc3545;
+}
+
+/* فرم تولید گزارش */
+.generate-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+}
+
+.form-group select,
+.form-group input {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-family: 'Vazir', Arial, sans-serif;
+}
+
+.form-error {
+    color: #dc3545;
+    margin-top: 0.5rem;
+    display: none;
+}
+
+/* گرید برای کارت‌های جفتی */
+.reports-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+/* واکنش‌گرایی */
+@media (max-width: 768px) {
+    .reports-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .reports-header button {
+        margin-top: 1rem;
+    }
+    
+    .modal-container {
+        width: 95%;
+    }
+    
+    .reports-grid {
+        grid-template-columns: 1fr;
+    }
+}

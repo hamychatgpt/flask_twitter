@@ -1,0 +1,238 @@
+/* استایل‌های ویژه بخش رصد لحظه‌ای */
+
+.realtime-container {
+    background-color: white;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    margin-bottom: 2rem;
+}
+
+.realtime-header {
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 1rem;
+}
+
+.realtime-header h1 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: var(--secondary-color);
+}
+
+.realtime-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.keyword-input-group {
+    display: flex;
+    flex: 1;
+    min-width: 200px;
+}
+
+.keyword-input {
+    flex: 1;
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px 0 0 4px;
+    font-family: 'Vazir', Arial, sans-serif;
+}
+
+.track-btn {
+    padding: 0.5rem 1rem;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 0;
+    cursor: pointer;
+}
+
+.stop-btn {
+    padding: 0.5rem 1rem;
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 0 4px 4px 0;
+    cursor: pointer;
+}
+
+.track-btn:hover {
+    background-color: #0c85d0;
+}
+
+.stop-btn:hover {
+    background-color: #bd2130;
+}
+
+.controls-secondary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.auto-scroll-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.auto-scroll-label {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+.clear-btn {
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.clear-btn:hover {
+    background-color: #5a6268;
+}
+
+.realtime-status {
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    border-radius: 4px;
+    background-color: #e9ecef;
+    color: var(--secondary-color);
+}
+
+.realtime-status.connected {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.realtime-status.disconnected {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.realtime-status.tracking {
+    background-color: #cce5ff;
+    color: #004085;
+}
+
+.tweets-container {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    height: 600px;
+    overflow-y: auto;
+    padding: 1rem;
+    background-color: #f8f9fa;
+}
+
+.tweets-header {
+    padding: 0.75rem 1rem;
+    background-color: var(--light-bg);
+    border-radius: 8px 8px 0 0;
+    border-bottom: 1px solid var(--border-color);
+    font-weight: bold;
+}
+
+.tweet-card {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    background-color: white;
+    transition: box-shadow 0.2s ease;
+}
+
+.tweet-card:hover {
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.tweet-header {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.tweet-username {
+    font-weight: bold;
+}
+
+.tweet-sentiment {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 16px;
+    font-size: 0.8rem;
+    margin-right: 0.5rem;
+}
+
+.tweet-sentiment.positive {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.tweet-sentiment.negative {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.tweet-sentiment.neutral {
+    background-color: #e9ecef;
+    color: #6c757d;
+}
+
+.tweet-score {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 16px;
+    font-size: 0.8rem;
+    background-color: #e9ecef;
+    color: #0c85d0;
+}
+
+.tweet-body {
+    padding: 1rem;
+}
+
+.tweet-text {
+    margin-bottom: 1rem;
+    line-height: 1.6;
+}
+
+.tweet-ai-analysis {
+    background-color: #f0f8ff;
+    padding: 0.75rem;
+    border-radius: 4px;
+    border-right: 3px solid #0c85d0;
+    margin-top: 0.75rem;
+    font-size: 0.9rem;
+}
+
+.tweet-ai-title {
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    color: #0c85d0;
+}
+
+/* واکنش‌گرایی */
+@media (max-width: 768px) {
+    .realtime-controls {
+        flex-direction: column;
+    }
+    
+    .keyword-input-group {
+        width: 100%;
+    }
+    
+    .controls-secondary {
+        width: 100%;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
