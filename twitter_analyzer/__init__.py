@@ -30,6 +30,7 @@ def create_app(config_name='default'):
     except OSError:
         pass
     
+
     # پیکربندی پایگاه داده
     db.init_app(app)
     
@@ -38,8 +39,7 @@ def create_app(config_name='default'):
         'CACHE_TYPE': app.config.get('CACHE_TYPE', 'SimpleCache'),
         'CACHE_DEFAULT_TIMEOUT': app.config.get('TWITTER_CACHE_TTL', 300)
     })
-    text_processor = PersianTextProcessor()
-    text_processor.init_app(app)
+
     # پیکربندی کتابخانه‌های جدید
     migrate.init_app(app, db)
     bootstrap.init_app(app)
@@ -93,6 +93,28 @@ def create_app(config_name='default'):
     
     # پیکربندی و شروع زمان‌بندی
     scheduler.init_app(app)
+
+
+    try:
+        # بررسی وجود پردازشگر متن فارسی
+        from .utils.text_processor import PersianTextProcessor
+        
+        # فقط اگر PersianTextProcessor در app.extensions نباشد، اضافه کن
+        if hasattr(app, 'extensions') and 'persian_content_analyzer' not in app.extensions:
+            text_processor = PersianTextProcessor()
+            text_processor.init_app(app)
+            app.logger.info("PersianTextProcessor initialized successfully")
+    except ImportError:
+        app.logger.warning("PersianTextProcessor not available. Continuing without it.")
+        pass
+
+    # ثبت بلوپرینت analyzer
+    from .analyzer import analyzer_bp
+    app.register_blueprint(analyzer_bp)
+
+    # راه‌اندازی analyzer
+    from .analyzer.routes import init_app as init_analyzer
+    init_analyzer(app)
     
     # فقط در محیط تولید یا وقتی آگاهانه زمان‌بندی را فعال می‌کنیم
     if app.config.get('SCHEDULER_ENABLED', False):
@@ -124,3 +146,4 @@ def configure_logging(app):
         app.logger.addHandler(file_handler)
         app.logger.setLevel(logging.INFO)
         app.logger.info('Twitter Analyzer startup')
+
