@@ -1,0 +1,239 @@
+/* استایل‌های مخصوص بخش جمع‌آوری توییت‌ها */
+
+/* استایل کلی صفحه جمع‌آوری */
+.collector-container {
+    padding: 1.5rem;
+    background-color: #f8f9fa;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+/* استایل برای تب‌ها */
+.collector-tabs .nav-tabs {
+    border-bottom: 1px solid #dee2e6;
+    margin-bottom: 1rem;
+}
+
+.collector-tabs .nav-tabs .nav-link {
+    border: 1px solid transparent;
+    border-top-left-radius: 0.25rem;
+    border-top-right-radius: 0.25rem;
+    color: #495057;
+}
+
+.collector-tabs .nav-tabs .nav-link:hover {
+    border-color: #e9ecef #e9ecef #dee2e6;
+}
+
+.collector-tabs .nav-tabs .nav-link.active {
+    color: #1DA1F2;
+    background-color: #fff;
+    border-color: #dee2e6 #dee2e6 #fff;
+    font-weight: bold;
+}
+
+/* استایل محتوای تب‌ها */
+.collector-tabs .tab-content {
+    padding: 1.5rem;
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+    border-top: none;
+    border-radius: 0 0 0.25rem 0.25rem;
+}
+
+/* استایل فرم‌ها */
+.collector-form {
+    margin-bottom: 1rem;
+}
+
+.collector-form .form-group {
+    margin-bottom: 1rem;
+}
+
+.collector-form .form-group label {
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.collector-form .form-actions {
+    margin-top: 1.5rem;
+}
+
+/* استایل جدول مجموعه‌ها */
+.collections-list {
+    margin-top: 2rem;
+}
+
+.collections-list h2 {
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+    color: #1DA1F2;
+}
+
+.collections-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.collections-table th,
+.collections-table td {
+    padding: 0.75rem;
+    vertical-align: middle;
+    border-top: 1px solid #dee2e6;
+}
+
+.collections-table thead th {
+    vertical-align: bottom;
+    border-bottom: 2px solid #dee2e6;
+    background-color: #f8f9fa;
+    color: #495057;
+}
+
+.collections-table tbody tr:hover {
+    background-color: rgba(29, 161, 242, 0.05);
+}
+
+/* استایل نمایش وضعیت‌ها */
+.badge-status {
+    padding: 0.35em 0.65em;
+    border-radius: 0.25rem;
+}
+
+.status-completed {
+    background-color: #28a745;
+    color: #fff;
+}
+
+.status-running {
+    background-color: #1DA1F2;
+    color: #fff;
+}
+
+.status-failed {
+    background-color: #dc3545;
+    color: #fff;
+}
+
+/* استایل نمایش انواع مجموعه */
+.type-badge {
+    padding: 0.35em 0.65em;
+    border-radius: 0.25rem;
+    font-size: 85%;
+}
+
+.type-keyword {
+    background-color: #007bff;
+    color: #fff;
+}
+
+.type-username {
+    background-color: #17a2b8;
+    color: #fff;
+}
+
+.type-hashtag {
+    background-color: #28a745;
+    color: #fff;
+}
+
+.type-mention {
+    background-color: #fd7e14;
+    color: #fff;
+}
+
+.type-list {
+    background-color: #6f42c1;
+    color: #fff;
+}
+
+.type-tweet_replies {
+    background-color: #6c757d;
+    color: #fff;
+}
+
+/* استایل برای نمایش لودینگ */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    display: none;
+}
+
+.loading-content {
+    background-color: #fff;
+    padding: 2rem;
+    border-radius: 0.5rem;
+    text-align: center;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+}
+
+.loading-content .spinner-border {
+    width: 3rem;
+    height: 3rem;
+}
+
+/* استایل برای کانتینر هشدارها */
+#alerts-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9990;
+    width: 350px;
+}
+
+/* اصلاح استایل برای خطوط جدول */
+.collections-table tr {
+    border-bottom: 1px solid #dee2e6;
+}
+
+.collections-table td:last-child {
+    text-align: center;
+}
+
+/* اصلاح استایل برای دکمه‌های عملیات */
+.action-buttons .btn {
+    margin-right: 0.25rem;
+}
+
+/* استایل برای دیالوگ تأیید حذف */
+.modal-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.modal-footer {
+    background-color: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+}
+
+/* استایل ریسپانسیو */
+@media (max-width: 768px) {
+    .collector-tabs .nav-tabs {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+    
+    .collector-tabs .nav-tabs .nav-item {
+        float: none;
+        display: inline-block;
+    }
+    
+    .collections-table th,
+    .collections-table td {
+        padding: 0.5rem;
+        font-size: 0.9rem;
+    }
+    
+    .action-buttons .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+}
