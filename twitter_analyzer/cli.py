@@ -21,3 +21,6 @@ def init_app(app):
     """اضافه کردن دستورات CLI به برنامه"""
     app.cli.add_command(init_db_command)
     app.cli.add_command(drop_db_command)
+
+
+    
