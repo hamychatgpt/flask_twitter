@@ -1,0 +1,380 @@
+{% extends 'base.html' %}
+
+{% block title %}مجموعه: {{ collection.name }}{% endblock %}
+
+{% block content %}
+<div class="collector-container">
+    <div class="collection-header">
+        <h1>مجموعه: {{ collection.name }}</h1>
+        <div class="collection-meta">
+            <span class="collection-total-tweets">تعداد توییت‌ها: {{ collection.total_tweets }}</span>
+            <span class="collection-status">
+                {% if collection.status == 'completed' %}
+                    <span class="badge badge-success">تکمیل شده</span>
+                {% elif collection.status == 'running' %}
+                    <span class="badge badge-primary">در حال اجرا</span>
+                {% elif collection.status == 'failed' %}
+                    <span class="badge badge-danger">خطا</span>
+                {% else %}
+                    <span class="badge">{{ collection.status }}</span>
+                {% endif %}
+            </span>
+        </div>
+    </div>
+    
+    <!-- فرم جستجو -->
+    <div class="search-section">
+        <form method="GET" action="{{ url_for('collector.view_collection', collection_id=collection.id) }}" class="search-form">
+            <div class="search-input-group">
+                <input type="text" name="search" class="search-input" placeholder="جستجو در متن توییت‌ها..." value="{{ search or '' }}">
+                <button type="submit" class="search-button">جستجو</button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- نمایش توییت‌ها -->
+    <div class="tweets-container">
+        {% if tweets %}
+            {% for tweet in tweets %}
+                <div class="tweet-card">
+                    <div class="tweet-header">
+                        <div class="tweet-user-info">
+                            <img src="{{ (tweet.twitter_user.profile_image_url if tweet.twitter_user else none) or url_for('static', filename='img/default-avatar.png') }}" class="tweet-avatar" alt="تصویر پروفایل">
+                            <div class="tweet-user-details">
+                                <div class="tweet-name">{{ (tweet.twitter_user.display_name if tweet.twitter_user else 'کاربر') }}</div>
+                                <div class="tweet-username">@{{ (tweet.twitter_user.username if tweet.twitter_user else 'ناشناس') }}</div>
+                            </div>
+                        </div>
+                        <div class="tweet-date">
+                            {{ tweet.twitter_created_at.strftime('%Y/%m/%d %H:%M') }}
+                        </div>
+                    </div>
+                    <div class="tweet-body">
+                        {% if tweet.twitter_id %}
+                        <a href="https://twitter.com/{{ tweet.twitter_user.username }}/status/{{ tweet.twitter_id }}" target="_blank" class="tweet-text-link">
+                            {{ tweet.text }}
+                        </a>
+                        {% else %}
+                        {{ tweet.text }}
+                        {% endif %}
+                    </div>
+                    <div class="tweet-footer">
+                        <div class="tweet-stats">
+                            <span class="tweet-stat likes"><i class="fa fa-heart"></i> {{ tweet.likes_count }}</span>
+                            <span class="tweet-stat retweets"><i class="fa fa-retweet"></i> {{ tweet.retweets_count }}</span>
+                            <span class="tweet-stat replies"><i class="fa fa-reply"></i> {{ tweet.replies_count }}</span>
+                        </div>
+                        {% if tweet.hashtags %}
+                        <div class="tweet-hashtags">
+                            {% for hashtag in tweet.hashtags %}
+                                <span class="hashtag">#{{ hashtag.text }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+            
+            <!-- پیجینیشن -->
+            {% if pagination and pagination.pages > 1 %}
+            <div class="pagination">
+                <ul class="pagination-list">
+                    {% if pagination.has_prev %}
+                        <li class="pagination-item">
+                            <a href="{{ url_for('collector.view_collection', collection_id=collection.id, page=pagination.prev_num, search=search) }}" class="pagination-link">&laquo; قبلی</a>
+                        </li>
+                    {% endif %}
+                    
+                    {% for page_num in pagination.iter_pages(left_edge=2, left_current=2, right_current=3, right_edge=2) %}
+                        {% if page_num %}
+                            {% if page_num == pagination.page %}
+                                <li class="pagination-item active">
+                                    <span class="pagination-link">{{ page_num }}</span>
+                                </li>
+                            {% else %}
+                                <li class="pagination-item">
+                                    <a href="{{ url_for('collector.view_collection', collection_id=collection.id, page=page_num, search=search) }}" class="pagination-link">{{ page_num }}</a>
+                                </li>
+                            {% endif %}
+                        {% else %}
+                            <li class="pagination-item disabled">
+                                <span class="pagination-link">...</span>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if pagination.has_next %}
+                        <li class="pagination-item">
+                            <a href="{{ url_for('collector.view_collection', collection_id=collection.id, page=pagination.next_num, search=search) }}" class="pagination-link">بعدی &raquo;</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+            {% endif %}
+            
+        {% else %}
+            <div class="empty-state">
+                <p>هیچ توییتی در این مجموعه یافت نشد. لطفاً جستجوی دیگری انجام دهید یا از بخش جمع‌آوری برای دریافت توییت‌های جدید استفاده کنید.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary-color: #1da1f2;
+        --secondary-color: #14171a;
+        --light-bg: #f5f8fa;
+        --border-color: #e1e8ed;
+        --text-muted: #6c757d;
+    }
+
+    .collector-container {
+        background-color: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    }
+
+    .collection-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 1rem;
+    }
+
+    .collection-header h1 {
+        margin: 0;
+        font-size: 1.5rem;
+        color: var(--secondary-color);
+    }
+
+    .collection-meta {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .collection-total-tweets {
+        color: var(--text-muted);
+    }
+
+    .search-section {
+        margin-bottom: 1.5rem;
+    }
+
+    .search-form {
+        width: 100%;
+    }
+
+    .search-input-group {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .search-input {
+        flex-grow: 1;
+        padding: 0.5rem;
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        font-family: 'Vazir', sans-serif;
+    }
+
+    .search-button {
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    .search-button:hover {
+        background-color: #0c85d0;
+    }
+
+    .tweets-container {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .tweet-card {
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 1rem;
+        background-color: white;
+        transition: box-shadow 0.3s ease;
+    }
+
+    .tweet-card:hover {
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .tweet-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .tweet-user-info {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .tweet-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+
+    .tweet-user-details {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .tweet-name {
+        font-weight: bold;
+        color: var(--secondary-color);
+    }
+
+    .tweet-username {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+    }
+
+    .tweet-date {
+        color: var(--text-muted);
+        font-size: 0.85rem;
+    }
+
+    .tweet-body {
+        margin-bottom: 1rem;
+        line-height: 1.6;
+    }
+
+    .tweet-text-link {
+        color: inherit;
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+
+    .tweet-text-link:hover {
+        color: var(--primary-color);
+        text-decoration: underline;
+    }
+
+    .tweet-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-top: 1px solid var(--border-color);
+        padding-top: 0.75rem;
+    }
+
+    .tweet-stats {
+        display: flex;
+        gap: 1rem;
+        color: var(--text-muted);
+    }
+
+    .tweet-stat {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .tweet-stat i {
+        margin-left: 0.25rem;
+    }
+
+    .tweet-hashtags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .hashtag {
+        background-color: var(--light-bg);
+        color: var(--primary-color);
+        padding: 0.25rem 0.5rem;
+        border-radius: 16px;
+        font-size: 0.85rem;
+    }
+
+    .pagination {
+        display: flex;
+        justify-content: center;
+        margin-top: 1.5rem;
+    }
+
+    .pagination-list {
+        display: flex;
+        list-style: none;
+        gap: 0.5rem;
+        padding: 0;
+    }
+
+    .pagination-item {
+        margin: 0;
+    }
+
+    .pagination-link {
+        display: block;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        color: var(--secondary-color);
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+    .pagination-item.active .pagination-link,
+    .pagination-link:hover {
+        background-color: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+
+    .pagination-item.disabled .pagination-link {
+        color: var(--text-muted);
+        cursor: not-allowed;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 2rem;
+        background-color: var(--light-bg);
+        border-radius: 8px;
+    }
+
+    .badge {
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.85rem;
+    }
+
+    .badge-success {
+        background-color: #28a745;
+        color: white;
+    }
+
+    .badge-primary {
+        background-color: var(--primary-color);
+        color: white;
+    }
+
+    .badge-danger {
+        background-color: #dc3545;
+        color: white;
+    }
+</style>
+{% endblock %}
