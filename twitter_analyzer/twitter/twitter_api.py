@@ -6,6 +6,8 @@ import traceback
 from urllib.parse import urljoin
 from flask import current_app
 from .rate_limit import RateLimitManager
+from .transformers import TwitterDataTransformer
+from .models import TweetModel, TwitterUserModel
 
 class TwitterAPI:
     """

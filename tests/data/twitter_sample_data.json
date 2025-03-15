@@ -1,0 +1,43 @@
+{
+    "tweets": [
+      {
+        "id": "1234567890",
+        "text": "This is a test tweet",
+        "created_at": "Wed Oct 10 20:19:24 +0000 2023",
+        "author": {
+          "id": "9876543210",
+          "userName": "testuser",
+          "displayName": "Test User",
+          "profileImageUrl": "https://example.com/profile.jpg"
+        },
+        "likeCount": 10,
+        "retweetCount": 5,
+        "replyCount": 3,
+        "quoteCount": 2,
+        "entities": {
+          "hashtags": [{"text": "hashtag"}],
+          "user_mentions": [{"screen_name": "mention", "id": "5555555"}],
+          "media": [
+            {
+              "media_url_https": "https://example.com/image.jpg",
+              "type": "photo",
+              "url": "https://t.co/shorturl"
+            }
+          ]
+        }
+      }
+    ],
+    "users": [
+      {
+        "id": "1234567890",
+        "userName": "testuser",
+        "displayName": "Test User",
+        "description": "This is a test user bio",
+        "location": "Test Location",
+        "followers": 100,
+        "following": 50,
+        "profileImageUrl": "https://example.com/profile.jpg",
+        "isBlueVerified": true
+      }
+    ]
+  }
