@@ -6,17 +6,17 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/reports-style.css') }}">
+<!-- اطمینان از بارگذاری Chart.js -->
 {% endblock %}
 
 {% block content %}
 <div class="reports-container">
     <div class="reports-header">
         <h1>گزارش‌های تحلیلی توییتر</h1>
-        {% if current_user.is_admin %}
+        <!-- حذف محدودیت دسترسی ادمین برای دکمه تولید گزارش -->
         <button type="button" class="btn" id="generate-report-btn">
             گزارش جدید
         </button>
-        {% endif %}
     </div>
     
     <div class="reports-status" id="status">
@@ -51,6 +51,11 @@
         </div>
         <div class="modal-body">
             <form id="generate-report-form" class="generate-form">
+                <!-- اضافه کردن توکن CSRF -->
+                {% if csrf_token %}
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                {% endif %}
+                
                 <div class="form-group">
                     <label for="period-select">بازه زمانی</label>
                     <select id="period-select" name="period">
@@ -167,6 +172,11 @@
                     <div id="top-tweets"></div>
                 </div>
             </div>
+            
+            <!-- دکمه دانلود -->
+            <div class="report-actions">
+                <button type="button" class="btn btn-download" id="download-report-btn">دانلود گزارش</button>
+            </div>
         </div>
         <div class="modal-footer">
             <button type="button" class="btn" id="close-details-btn">بستن</button>
@@ -176,7 +186,82 @@
 {% endblock %}
 
 {% block extra_js %}
+<!-- اطمینان از بارگذاری Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js" integrity="sha256-+8RZJua0aEWg+QVVKg4LEzEEm/8RFez5Tb4JBNiV5xA=" crossorigin="anonymous"></script>
 <script src="{{ url_for('static', filename='js/reports.js') }}"></script>
 
-
+<script>
+    // اضافه کردن عملکرد دانلود گزارش
+    document.addEventListener('DOMContentLoaded', function() {
+        const downloadBtn = document.getElementById('download-report-btn');
+        if (downloadBtn) {
+            downloadBtn.addEventListener('click', function() {
+                const reportDetailsModal = document.getElementById('report-details-modal');
+                
+                // استخراج شناسه گزارش از URL جزئیات که قبلا باز شده
+                const viewReportButtons = document.querySelectorAll('.view-report');
+                let currentReportId = null;
+                
+                for (const button of viewReportButtons) {
+                    if (button.closest('tr').classList.contains('active')) {
+                        currentReportId = button.getAttribute('data-id');
+                        break;
+                    }
+                }
+                
+                if (!currentReportId) {
+                    // تلاش دوم: از URL آدرس کنونی
+                    const modalElement = document.querySelector('.modal-body');
+                    if (modalElement && modalElement.dataset.reportId) {
+                        currentReportId = modalElement.dataset.reportId;
+                    }
+                }
+                
+                if (currentReportId) {
+                    // ایجاد و کلیک روی یک لینک مخفی برای دانلود
+                    const downloadLink = document.createElement('a');
+                    downloadLink.href = `/reports/download/${currentReportId}`;
+                    downloadLink.download = `report_${currentReportId}.json`;
+                    downloadLink.style.display = 'none';
+                    document.body.appendChild(downloadLink);
+                    downloadLink.click();
+                    document.body.removeChild(downloadLink);
+                } else {
+                    alert('خطا: شناسه گزارش یافت نشد.');
+                }
+            });
+        }
+        
+        // اضافه کردن کد استایل‌دهی برای دکمه دانلود
+        const style = document.createElement('style');
+        style.textContent = `
+            .report-actions {
+                margin-top: 1.5rem;
+                text-align: center;
+            }
+            
+            .btn-download {
+                background-color: #28a745;
+                color: white;
+                border: none;
+                padding: 0.5rem 1rem;
+                border-radius: 4px;
+                cursor: pointer;
+            }
+            
+            .btn-download:hover {
+                background-color: #218838;
+            }
+            
+            .chart-error, .chart-empty {
+                text-align: center;
+                padding: 2rem;
+                color: #6c757d;
+                background-color: #f8f9fa;
+                border-radius: 4px;
+            }
+        `;
+        document.head.appendChild(style);
+    });
+</script>
 {% endblock %}
