@@ -10,6 +10,8 @@ from .models import db
 from .auth.utils import login_manager
 from .twitter import twitter_api
 from .extensions import migrate, bootstrap, scheduler, cache
+from .utils.text_processor import PersianTextProcessor
+
 
 def create_app(config_name='default'):
     """Application factory - ایجاد و پیکربندی اپلیکیشن Flask"""
@@ -36,7 +38,8 @@ def create_app(config_name='default'):
         'CACHE_TYPE': app.config.get('CACHE_TYPE', 'SimpleCache'),
         'CACHE_DEFAULT_TIMEOUT': app.config.get('TWITTER_CACHE_TTL', 300)
     })
-    
+    text_processor = PersianTextProcessor()
+    text_processor.init_app(app)
     # پیکربندی کتابخانه‌های جدید
     migrate.init_app(app, db)
     bootstrap.init_app(app)

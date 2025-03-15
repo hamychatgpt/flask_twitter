@@ -153,3 +153,35 @@ def get_collection_tweets(collection_id):
             'prev_num': pagination.prev_num
         }
     )
+
+
+@api_bp.route('/test-text-processor', methods=['GET'])
+def test_text_processor():
+    """Route آزمایشی برای تست پردازشگر متن فارسی"""
+    from ..utils.text_processor import PersianTextProcessor
+    
+    # ایجاد نمونه پردازشگر
+    processor = PersianTextProcessor()
+    
+    # متن‌های آزمایشی
+    test_texts = [
+        "این یک متن #آزمایشی برای @کاربر است.",
+        "کتاب‌ها و مقاله‌های علمی بسیار جالب هستند.",
+        "کانال تلگرام ما را دنبال کنید برای تخفیف ویژه!",
+        "This is a test text with #hashtag and @mention."
+    ]
+    
+    results = []
+    for text in test_texts:
+        result = {
+            'original': text,
+            'processed': processor.preprocess(text),
+            'hashtags': processor.extract_hashtags(text),
+            'mentions': processor.extract_mentions(text),
+            'language': processor.detect_language(text),
+            'is_spam': processor.is_spam(text)[0],
+            'spam_reason': processor.is_spam(text)[1]
+        }
+        results.append(result)
+    
+    return jsonify(results)
