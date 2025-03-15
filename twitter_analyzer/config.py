@@ -55,6 +55,22 @@ class Config:
     MAX_BATCH_TEXTS = 20
     MAX_REPORT_TEXTS = 50
     
+    # تنظیمات مانیتورینگ لحظه‌ای
+    TRACKING_KEYWORDS = os.environ.get('TRACKING_KEYWORDS', 'ایران,انتخابات,اقتصاد,دلار,بورس').split(',')
+    TRACKING_INTERVAL_SECONDS = int(os.environ.get('TRACKING_INTERVAL_SECONDS', 60))
+    ADVANCED_ANALYSIS_THRESHOLD = int(os.environ.get('ADVANCED_ANALYSIS_THRESHOLD', 100))
+    
+    # تنظیمات گزارش‌گیری
+    ENABLE_MINUTE_REPORTS = os.environ.get('ENABLE_MINUTE_REPORTS', 'false').lower() == 'true'
+    ENABLE_HOURLY_REPORTS = os.environ.get('ENABLE_HOURLY_REPORTS', 'true').lower() == 'true'
+    ENABLE_DAILY_REPORTS = os.environ.get('ENABLE_DAILY_REPORTS', 'true').lower() == 'true'
+    
+    # تنظیمات پردازش توییت‌ها
+    BACKGROUND_PROCESSING_ENABLED = os.environ.get('BACKGROUND_PROCESSING_ENABLED', 'false').lower() == 'true'
+    BACKGROUND_PROCESSING_INTERVAL = int(os.environ.get('BACKGROUND_PROCESSING_INTERVAL', 300))
+    TESTING_STREAM_ENABLED = os.environ.get('TESTING_STREAM_ENABLED', 'false').lower() == 'true'
+    AUTO_START_TRACKING = os.environ.get('AUTO_START_TRACKING', 'false').lower() == 'true'
+    
 class DevelopmentConfig(Config):
     """تنظیمات محیط توسعه"""
     DEBUG = True

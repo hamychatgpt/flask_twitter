@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {{ title }} - مانیتورینگ لحظه‌ای
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">مانیتورینگ لحظه‌ای توییت‌ها</h3>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="keyword-input" placeholder="کلمه کلیدی برای ردیابی">
+                            <div class="input-group-append">
+                                <button class="btn btn-primary" id="track-btn">ردیابی</button>
+                                <button class="btn btn-danger" id="stop-btn">توقف</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="auto-scroll" checked>
+                            <label class="form-check-label" for="auto-scroll">اسکرول خودکار</label>
+                        </div>
+                        <button class="btn btn-secondary btn-sm float-right" id="clear-btn">پاکسازی</button>
+                    </div>
+                </div>
+                
+                <div class="alert alert-info" id="status">
+                    در حال اتصال...
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h5>توییت‌های دریافتی</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="tweet-container" id="tweets-container" style="max-height: 600px; overflow-y: auto;">
+                            <!-- توییت‌ها اینجا نمایش داده می‌شوند -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // اتصال به WebSocket
+        const socket = io();
+        const tweetsContainer = document.getElementById('tweets-container');
+        const statusElement = document.getElementById('status');
+        const keywordInput = document.getElementById('keyword-input');
+        const trackBtn = document.getElementById('track-btn');
+        const stopBtn = document.getElementById('stop-btn');
+        const clearBtn = document.getElementById('clear-btn');
+        const autoScrollCheckbox = document.getElementById('auto-scroll');
+        
+        let currentKeyword = null;
+        
+        // رویداد اتصال
+        socket.on('connect', function() {
+            statusElement.textContent = 'متصل شد';
+            statusElement.className = 'alert alert-success';
+        });
+        
+        // رویداد قطع اتصال
+        socket.on('disconnect', function() {
+            statusElement.textContent = 'قطع شد. در حال تلاش مجدد...';
+            statusElement.className = 'alert alert-danger';
+        });
+        
+        // رویداد دریافت توییت
+        socket.on('tweet', function(data) {
+            console.log('Tweet received:', data);
+            
+            // تحلیل احساسات
+            let sentiment = 'neutral';
+            let sentimentText = 'خنثی';
+            
+            if (data.local_analysis && data.local_analysis.sentiment) {
+                sentiment = data.local_analysis.sentiment;
+                if (sentiment === 'positive') {
+                    sentimentText = 'مثبت';
+                } else if (sentiment === 'negative') {
+                    sentimentText = 'منفی';
+                }
+            }
+            
+            // ایجاد کارت توییت
+            const tweetCard = document.createElement('div');
+            tweetCard.className = 'card mb-3';
+            
+            // رنگ کارت بر اساس تحلیل احساسات
+            if (sentiment === 'positive') {
+                tweetCard.classList.add('border-success');
+            } else if (sentiment === 'negative') {
+                tweetCard.classList.add('border-danger');
+            } else {
+                tweetCard.classList.add('border-light');
+            }
+            
+            // محتوای کارت
+            tweetCard.innerHTML = `
+                <div class="card-header">
+                    <strong>@${data.user}</strong>
+                    <span class="badge badge-pill badge-${sentiment === 'positive' ? 'success' : (sentiment === 'negative' ? 'danger' : 'secondary')}">
+                        ${sentimentText}
+                    </span>
+                    <span class="badge badge-pill badge-info">
+                        امتیاز تعامل: ${data.engagement_score}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <p>${data.text}</p>
+                    ${data.ai_analysis ? '<div class="alert alert-primary mt-2"><strong>تحلیل هوش مصنوعی:</strong><br>' + JSON.stringify(data.ai_analysis) + '</div>' : ''}
+                </div>
+            `;
+            
+            // افزودن به ابتدای لیست
+            tweetsContainer.prepend(tweetCard);
+            
+            // اسکرول خودکار
+            if (autoScrollCheckbox.checked) {
+                tweetsContainer.scrollTop = 0;
+            }
+        });
+        
+        // رویداد پیوستن به اتاق
+        socket.on('join_response', function(data) {
+            statusElement.textContent = `در حال ردیابی: ${data.term}`;
+            statusElement.className = 'alert alert-info';
+            currentKeyword = data.term;
+        });
+        
+        // رویداد خروج از اتاق
+        socket.on('leave_response', function(data) {
+            statusElement.textContent = 'ردیابی متوقف شد';
+            statusElement.className = 'alert alert-warning';
+            currentKeyword = null;
+        });
+        
+        // شروع ردیابی
+        trackBtn.addEventListener('click', function() {
+            const keyword = keywordInput.value.trim();
+            if (!keyword) {
+                alert('لطفاً یک کلمه کلیدی وارد کنید');
+                return;
+            }
+            
+            // خروج از اتاق قبلی
+            if (currentKeyword) {
+                socket.emit('leave', { term: currentKeyword });
+            }
+            
+            // پیوستن به اتاق جدید
+            socket.emit('join', { term: keyword });
+            keywordInput.value = '';
+        });
+        
+        // توقف ردیابی
+        stopBtn.addEventListener('click', function() {
+            if (currentKeyword) {
+                socket.emit('leave', { term: currentKeyword });
+            }
+        });
+        
+        // پاکسازی توییت‌ها
+        clearBtn.addEventListener('click', function() {
+            tweetsContainer.innerHTML = '';
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,103 @@
+{% extends 'admin/master.html' %}
+
+{% block body %}
+<div class="row">
+    <div class="col-md-12">
+        <h1>تنظیمات مانیتورینگ لحظه‌ای</h1>
+        <p>در این بخش می‌توانید تنظیمات مانیتورینگ لحظه‌ای را تغییر دهید.</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">ویرایش تنظیمات</h3>
+            </div>
+            <div class="panel-body">
+                <form method="post" action="{{ url_for('.settings') }}">
+                    <div class="form-group">
+                        <label for="default_keywords">کلمات کلیدی پیش‌فرض (جدا شده با کاما):</label>
+                        <input type="text" class="form-control" id="default_keywords" name="default_keywords" value="{{ form.default_keywords.data }}">
+                        {% if form.default_keywords.errors %}
+                            <div class="text-danger">
+                                {% for error in form.default_keywords.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <p class="help-block">این کلمات کلیدی به صورت پیش‌فرض برای ردیابی استفاده می‌شوند.</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="tracking_interval">بازه زمانی بررسی (ثانیه):</label>
+                        <input type="number" class="form-control" id="tracking_interval" name="tracking_interval" value="{{ form.tracking_interval.data }}" min="10" max="3600">
+                        {% if form.tracking_interval.errors %}
+                            <div class="text-danger">
+                                {% for error in form.tracking_interval.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <p class="help-block">فاصله زمانی بین بررسی‌های API توییتر (بین 10 تا 3600 ثانیه).</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="analysis_threshold">آستانه امتیاز تعامل برای تحلیل پیشرفته:</label>
+                        <input type="number" class="form-control" id="analysis_threshold" name="analysis_threshold" value="{{ form.analysis_threshold.data }}" min="10">
+                        {% if form.analysis_threshold.errors %}
+                            <div class="text-danger">
+                                {% for error in form.analysis_threshold.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <p class="help-block">توییت‌هایی که امتیاز تعامل آنها بیشتر از این مقدار باشد، توسط هوش مصنوعی تحلیل می‌شوند.</p>
+                    </div>
+                    
+                    <div class="checkbox">
+                        <label>
+                            <input type="checkbox" name="auto_start" {% if form.auto_start.data %}checked{% endif %}>
+                            شروع خودکار ردیابی در زمان راه‌اندازی برنامه
+                        </label>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">ذخیره تنظیمات</button>
+                    <a href="{{ url_for('.index') }}" class="btn btn-default">بازگشت</a>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                <h3 class="panel-title">راهنما</h3>
+            </div>
+            <div class="panel-body">
+                <h4>کلمات کلیدی</h4>
+                <p>
+                    کلمات کلیدی را با کاما از هم جدا کنید. مثال: <code>ایران, انتخابات, اقتصاد</code>
+                </p>
+                
+                <h4>بازه زمانی بررسی</h4>
+                <p>
+                    این مقدار مشخص می‌کند هر چند ثانیه یکبار، API توییتر برای کلمات کلیدی بررسی شود. 
+                    مقادیر کمتر باعث بروزرسانی سریع‌تر می‌شود، اما ممکن است با محدودیت‌های API مواجه شوید.
+                </p>
+                
+                <h4>آستانه تحلیل هوش مصنوعی</h4>
+                <p>
+                    امتیاز تعامل از جمع وزنی لایک‌ها، ریتوییت‌ها و پاسخ‌ها محاسبه می‌شود. 
+                    مثلاً یک توییت با 50 لایک، 10 ریتوییت و 5 پاسخ، امتیاز 90 دارد (50 + 10×2 + 5×3).
+                </p>
+                
+                <div class="alert alert-warning">
+                    <strong>توجه!</strong> این تنظیمات فقط تا راه‌اندازی مجدد برنامه معتبر هستند.
+                    برای ذخیره دائمی آنها، باید در فایل تنظیمات یا متغیرهای محیطی تغییر ایجاد کنید.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -64,9 +64,17 @@ class Tweet(db.Model, CRUDMixin, TimestampMixin):
     media_urls = db.Column(db.Text)  # JSON string
     urls = db.Column(db.Text)  # JSON string
     
-    # نتایج تحلیل‌ها
+# نتایج تحلیل‌ها
     sentiment = db.Column(db.String(10))  # positive, neutral, negative
     sentiment_score = db.Column(db.Float)  # امتیاز دقیق احساسات (-1 تا 1)
+    sentiment_analysis_method = db.Column(db.String(20))  # local, anthropic, hybrid
+    sentiment_confidence = db.Column(db.Float)  # میزان اطمینان (0 تا 1)
+    sentiment_details = db.Column(db.Text)  # جزئیات تحلیل (JSON)
+    
+    # آمار پیشرفته
+    engagement_score = db.Column(db.Integer)  # امتیاز تعامل محاسبه شده
+    virality_score = db.Column(db.Float)  # امتیاز ویروسی شدن (0 تا 1)
+    has_ai_analysis = db.Column(db.Boolean, default=False)  # آیا تحلیل هوش مصنوعی انجام شده است
     
     # روابط
     twitter_user_id = db.Column(db.Integer, db.ForeignKey('twitter_user.id'), index=True)
@@ -107,6 +115,122 @@ class Tweet(db.Model, CRUDMixin, TimestampMixin):
         if isinstance(urls_list, list):
             self.urls = json.dumps(urls_list)
     
+    def set_sentiment_details(self, details):
+        """تنظیم جزئیات تحلیل احساسات به صورت JSON"""
+        if details:
+            self.sentiment_details = json.dumps(details)
+    
+    def get_sentiment_details(self):
+        """دریافت جزئیات تحلیل احساسات به صورت دیکشنری"""
+        if not self.sentiment_details:
+            return {}
+        try:
+            return json.loads(self.sentiment_details)
+        except:
+            return {}
+    
+    def calculate_engagement_score(self):
+        """محاسبه امتیاز تعامل براساس لایک، ریتوییت و پاسخ"""
+        likes = self.likes_count or 0
+        retweets = self.retweets_count or 0
+        replies = self.replies_count or 0
+        quotes = self.quotes_count or 0
+        
+        # فرمول محاسبه: لایک + (ریتوییت * 2) + (پاسخ * 3) + (نقل قول * 2)
+        score = likes + (retweets * 2) + (replies * 3) + (quotes * 2)
+        self.engagement_score = score
+        
+        return score
+    
+    def calculate_virality_score(self):
+        """محاسبه امتیاز ویروسی شدن توییت (0 تا 1)"""
+        engagement = self.engagement_score or self.calculate_engagement_score()
+        
+        # آستانه‌های ویروسی شدن
+        thresholds = [10, 50, 100, 500, 1000, 5000, 10000]
+        
+        # محاسبه امتیاز از 0 تا 1
+        for i, threshold in enumerate(thresholds):
+            if engagement < threshold:
+                # محاسبه خطی بین آستانه‌ها
+                if i == 0:
+                    score = engagement / threshold
+                else:
+                    prev_threshold = thresholds[i-1]
+                    score = i/len(thresholds) + (engagement - prev_threshold) / (threshold - prev_threshold) / len(thresholds)
+                break
+        else:
+            # بالاتر از همه آستانه‌ها
+            score = 1.0
+        
+        self.virality_score = score
+        return score
+    
+    def analyze_sentiment_with_local_processor(self, text_processor=None):
+        """تحلیل احساسات با استفاده از پردازشگر محلی"""
+        from flask import current_app
+        
+        # دریافت پردازشگر محلی
+        if text_processor is None:
+            if hasattr(current_app, 'extensions') and 'persian_content_analyzer' in current_app.extensions:
+                text_processor = current_app.extensions['persian_content_analyzer']
+            else:
+                from ..utils.text_processor import PersianTextProcessor
+                text_processor = PersianTextProcessor()
+        
+        # تحلیل احساسات
+        result = text_processor.analyze_sentiment(self.text)
+        sentiment, score, negative_words, positive_words = result
+        
+        # ذخیره نتایج
+        self.sentiment = sentiment
+        self.sentiment_score = score
+        self.sentiment_analysis_method = 'local'
+        self.sentiment_confidence = 0.7  # اطمینان پیش‌فرض برای تحلیل محلی
+        
+        # ذخیره جزئیات
+        details = {
+            'negative_words': negative_words,
+            'positive_words': positive_words,
+            'method': 'local'
+        }
+        self.set_sentiment_details(details)
+        
+        return sentiment
+    
+    def analyze_sentiment_with_ai(self, force=False):
+        """تحلیل احساسات با استفاده از هوش مصنوعی"""
+        from flask import current_app
+        
+        # بررسی وجود تحلیلگر هوش مصنوعی
+        if not hasattr(current_app, 'extensions') or 'anthropic_analyzer' not in current_app.extensions:
+            return None
+        
+        # دریافت تحلیلگر هوش مصنوعی
+        ai_analyzer = current_app.extensions['anthropic_analyzer']
+        
+        try:
+            # تحلیل با هوش مصنوعی
+            result = ai_analyzer.analyze_sentiment(self.text, force_full_analysis=force)
+            
+            # ذخیره نتایج
+            sentiment = result.get('sentiment', 'neutral')
+            self.sentiment = sentiment
+            self.sentiment_score = result.get('intensity', 0.5) * (1 if sentiment == 'positive' else -1 if sentiment == 'negative' else 0)
+            self.sentiment_analysis_method = 'anthropic'
+            self.sentiment_confidence = result.get('confidence', 0.8)
+            
+            # ذخیره جزئیات
+            self.set_sentiment_details(result)
+            self.has_ai_analysis = True
+            
+            return sentiment
+            
+        except Exception as e:
+            if hasattr(current_app, 'logger'):
+                current_app.logger.error(f"Error in AI sentiment analysis: {e}", exc_info=True)
+            return None
+        
     @classmethod
     def get_or_create(cls, twitter_id, text, twitter_user_id, **kwargs):
         """
@@ -120,4 +244,10 @@ class Tweet(db.Model, CRUDMixin, TimestampMixin):
                 twitter_user_id=twitter_user_id,
                 **kwargs
             )
+            
+            # محاسبه امتیاز تعامل
+            if 'likes_count' in kwargs or 'retweets_count' in kwargs or 'replies_count' in kwargs:
+                tweet.calculate_engagement_score()
+                tweet.calculate_virality_score()
+        
         return tweet

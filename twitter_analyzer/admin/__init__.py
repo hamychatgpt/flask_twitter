@@ -308,4 +308,8 @@ def init_app(app):
     # افزودن نمای جدید جمع‌آوری توییت‌ها
     admin.add_view(CollectorAdminView(name='جمع‌آوری توییت‌ها', endpoint='collection_admin'))
     
+    # افزودن نمای مدیریت مانیتورینگ لحظه‌ای
+    from .realtime_views import RealtimeMonitoringView
+    admin.add_view(RealtimeMonitoringView(name='مانیتورینگ لحظه‌ای', endpoint='realtime_admin'))
+    
     admin.init_app(app)

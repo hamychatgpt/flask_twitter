@@ -108,7 +108,7 @@ def create_app(config_name='default'):
         app.logger.warning("PersianTextProcessor not available. Continuing without it.")
         pass
 
-    # ثبت بلوپرینت analyzer
+# ثبت بلوپرینت analyzer
     from .analyzer import analyzer_bp
     app.register_blueprint(analyzer_bp)
 
@@ -116,6 +116,47 @@ def create_app(config_name='default'):
     from .analyzer.routes import init_app as init_analyzer
     init_analyzer(app)
     
+    # ثبت بلوپرینت مانیتورینگ لحظه‌ای
+    from .realtime import realtime_bp
+    app.register_blueprint(realtime_bp)
+    
+    # راه‌اندازی Socket.IO
+    from .realtime.socket import init_app as init_socket
+    init_socket(app)
+    
+    # ثبت بلوپرینت گزارش‌گیری
+    from .reports import reports_bp
+    app.register_blueprint(reports_bp)
+    
+    # راه‌اندازی سرویس گزارش‌گیری
+    from .reports.service import ReportingService
+    reporting_service = ReportingService(app)
+    
+    # راه‌اندازی سرویس پردازش توییت‌ها
+    from .services.tweet_processor import TweetProcessor
+    tweet_processor = TweetProcessor(app)
+    
+    # شروع پردازش توییت‌ها در پس‌زمینه اگر فعال باشد
+    if app.config.get('BACKGROUND_PROCESSING_ENABLED', False):
+        interval = app.config.get('BACKGROUND_PROCESSING_INTERVAL', 300)
+        tweet_processor.start_background_processing(interval_seconds=interval)
+        app.logger.info(f"Started background tweet processing with interval: {interval} seconds")
+    
+    # اگر برنامه در حالت دیباگ اجرا می‌شود، یک نمونه TwitterStream ایجاد می‌کنیم
+    if app.debug and app.config.get('TESTING_STREAM_ENABLED', False):
+        from .realtime.stream import TwitterStream
+        stream = TwitterStream()
+        app.extensions['twitter_stream'] = stream
+        
+        # شروع ردیابی با کلمات کلیدی پیش‌فرض
+        if app.config.get('AUTO_START_TRACKING', False):
+            stream.start_tracking()
+            app.logger.info(f"Auto-started tracking with keywords: {stream.tracking_keywords}")
+    
+    # فقط در محیط تولید یا وقتی آگاهانه زمان‌بندی را فعال می‌کنیم
+    if app.config.get('SCHEDULER_ENABLED', False):
+        scheduler.start()
+
     # فقط در محیط تولید یا وقتی آگاهانه زمان‌بندی را فعال می‌کنیم
     if app.config.get('SCHEDULER_ENABLED', False):
         scheduler.start()

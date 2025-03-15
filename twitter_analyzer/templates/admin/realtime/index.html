@@ -1,0 +1,116 @@
+{% extends 'admin/master.html' %}
+
+{% block body %}
+<div class="row">
+    <div class="col-md-12">
+        <h1>مدیریت مانیتورینگ لحظه‌ای</h1>
+        <p>در این بخش می‌توانید مانیتورینگ لحظه‌ای توییت‌ها را مدیریت کنید.</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">وضعیت کنونی</h3>
+            </div>
+            <div class="panel-body">
+                <dl>
+                    <dt>وضعیت:</dt>
+                    <dd>
+                        {% if stream_status.is_running %}
+                            <span class="label label-success">فعال</span>
+                        {% else %}
+                            <span class="label label-danger">غیرفعال</span>
+                        {% endif %}
+                    </dd>
+                    
+                    <dt>کلمات کلیدی در حال ردیابی:</dt>
+                    <dd>
+                        {% if stream_status.tracking_keywords %}
+                            {% for keyword in stream_status.tracking_keywords %}
+                                <span class="label label-info">{{ keyword }}</span>
+                            {% endfor %}
+                        {% else %}
+                            <em>هیچ کلمه کلیدی ردیابی نمی‌شود</em>
+                        {% endif %}
+                    </dd>
+                </dl>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        {% if not stream_status.is_running %}
+                            <form method="post" action="{{ url_for('.start_tracking') }}">
+                                <div class="form-group">
+                                    <label for="keywords">کلمات کلیدی:</label>
+                                    <input type="text" class="form-control" id="keywords" name="keywords" value="{{ current_settings.tracking_keywords }}">
+                                </div>
+                                <button type="submit" class="btn btn-success">شروع ردیابی</button>
+                            </form>
+                        {% else %}
+                            <form method="post" action="{{ url_for('.stop_tracking') }}">
+                                <button type="submit" class="btn btn-danger">توقف ردیابی</button>
+                            </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">تنظیمات فعلی</h3>
+            </div>
+            <div class="panel-body">
+                <dl>
+                    <dt>کلمات کلیدی پیش‌فرض:</dt>
+                    <dd>{{ current_settings.tracking_keywords }}</dd>
+                    
+                    <dt>بازه زمانی بررسی:</dt>
+                    <dd>{{ current_settings.tracking_interval }} ثانیه</dd>
+                    
+                    <dt>آستانه امتیاز تعامل برای تحلیل پیشرفته:</dt>
+                    <dd>{{ current_settings.advanced_analysis_threshold }}</dd>
+                </dl>
+                
+                <a href="{{ url_for('.settings') }}" class="btn btn-primary">ویرایش تنظیمات</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">راهنمای استفاده</h3>
+            </div>
+            <div class="panel-body">
+                <h4>مانیتورینگ لحظه‌ای چیست؟</h4>
+                <p>
+                    مانیتورینگ لحظه‌ای، ابزاری است که به شما امکان می‌دهد توییت‌های مرتبط با کلمات کلیدی مورد نظر خود را
+                    به صورت زنده دریافت کنید. این ابزار به صورت مداوم API توییتر را بررسی کرده و توییت‌های جدید را استخراج
+                    می‌کند.
+                </p>
+                
+                <h4>چگونه استفاده کنیم؟</h4>
+                <ol>
+                    <li>ابتدا کلمات کلیدی مورد نظر خود را مشخص کنید. کلمات کلیدی باید با کاما از هم جدا شوند.</li>
+                    <li>دکمه "شروع ردیابی" را بزنید تا سیستم شروع به جمع‌آوری توییت‌ها کند.</li>
+                    <li>برای مشاهده توییت‌های دریافتی، به صفحه <a href="/realtime/monitor">مانیتورینگ</a> مراجعه کنید.</li>
+                    <li>در هر زمان می‌توانید با دکمه "توقف ردیابی" فرآیند را متوقف کنید.</li>
+                </ol>
+                
+                <h4>نکات مهم</h4>
+                <ul>
+                    <li>توییت‌هایی که امتیاز تعامل بالاتری از حد آستانه دارند، توسط هوش مصنوعی تحلیل می‌شوند.</li>
+                    <li>به دلیل محدودیت‌های API توییتر، تعداد درخواست‌ها و کلمات کلیدی محدود است.</li>
+                    <li>نتایج مانیتورینگ در گزارش‌های ساعتی و روزانه نیز استفاده می‌شوند.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
