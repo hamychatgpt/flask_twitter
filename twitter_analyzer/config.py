@@ -48,7 +48,7 @@ class Config:
     SCHEDULER_ENABLED = False  # به صورت پیش‌فرض غیرفعال است
     
     # تنظیمات Anthropic API
-    ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY', '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')
+    ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY', '')
     ANTHROPIC_SCREENING_MODEL = os.environ.get('ANTHROPIC_SCREENING_MODEL', 'claude-3-5-haiku-20241022')
     ANTHROPIC_ANALYSIS_MODEL = os.environ.get('ANTHROPIC_ANALYSIS_MODEL', 'claude-3-5-haiku-20241022') 
     ANTHROPIC_REPORTING_MODEL = os.environ.get('ANTHROPIC_REPORTING_MODEL', 'claude-3-5-sonnet-20241022')
