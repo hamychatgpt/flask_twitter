@@ -24,6 +24,7 @@ class Tweet(db.Model, CRUDMixin, TimestampMixin):
     id = db.Column(db.Integer, primary_key=True)
     twitter_id = db.Column(db.String(64), unique=True, nullable=False, index=True)
     text = db.Column(db.Text, nullable=False)
+    processed_text = db.Column(db.Text) 
     full_text = db.Column(db.Text)  # متن کامل در صورت وجود
     twitter_created_at = db.Column(db.DateTime, index=True)  # زمان انتشار در توییتر
     
